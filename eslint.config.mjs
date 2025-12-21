@@ -1,38 +1,95 @@
-import { dirname } from 'path'
-import { fileURLToPath } from 'url'
+import { defineConfig, globalIgnores } from 'eslint/config'
+import typescriptEslintEslintPlugin from '@typescript-eslint/eslint-plugin'
+import simpleImportSort from 'eslint-plugin-simple-import-sort'
+import globals from 'globals'
+import tsParser from '@typescript-eslint/parser'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import js from '@eslint/js'
 import { FlatCompat } from '@eslint/eslintrc'
 
 const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-
+const __dirname = path.dirname(__filename)
 const compat = new FlatCompat({
   baseDirectory: __dirname,
+  recommendedConfig: js.configs.recommended,
+  allConfig: js.configs.all,
 })
 
-const eslintConfig = [
-  ...compat.extends('next/core-web-vitals', 'next/typescript'),
+export default defineConfig([
+  globalIgnores([
+    '**/.eslintrc.js',
+    '**/pg_data',
+    'src/app/(payload)/admin/importMap.js',
+    'src/migrations/**',
+  ]),
   {
+    extends: compat.extends('plugin:@typescript-eslint/recommended', 'plugin:prettier/recommended'),
+
+    plugins: {
+      '@typescript-eslint': typescriptEslintEslintPlugin,
+      'simple-import-sort': simpleImportSort,
+    },
+
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.jest,
+      },
+
+      parser: tsParser,
+      ecmaVersion: 5,
+      sourceType: 'module',
+
+      parserOptions: {
+        project: 'tsconfig.json',
+        tsconfigRootDir: __dirname,
+      },
+    },
+
     rules: {
-      '@typescript-eslint/ban-ts-comment': 'warn',
-      '@typescript-eslint/no-empty-object-type': 'warn',
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': [
-        'warn',
+      '@typescript-eslint/interface-name-prefix': 'off',
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      'no-unused-vars': 'off',
+
+      '@typescript-eslint/no-empty-object-type': [
+        'error',
         {
-          vars: 'all',
-          args: 'after-used',
-          ignoreRestSiblings: false,
+          allowInterfaces: 'always',
+        },
+      ],
+
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
-          destructuredArrayIgnorePattern: '^_',
-          caughtErrorsIgnorePattern: '^(_|ignore)',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+
+      'simple-import-sort/imports': [
+        'warn',
+        {
+          groups: [
+            ['^@nestjs'],
+            ['.module$', '.service$', '.guard$', '.controller$'],
+            [
+              '.dto$',
+              '.entity$',
+              '.interface$',
+              '.enum$',
+              '.decorator$',
+              '.error$',
+              '.exception$',
+              'constants$',
+            ],
+            ['.config$', '.storage$', 'schema$', '.'],
+          ],
         },
       ],
     },
   },
-  {
-    ignores: ['.next/'],
-  },
-]
-
-export default eslintConfig
+])

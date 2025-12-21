@@ -1,15 +1,19 @@
-import { postgresAdapter } from '@payloadcms/db-postgres'
-import { lexicalEditor } from '@payloadcms/richtext-lexical'
-import path from 'path'
-import { buildConfig } from 'payload'
-import { fileURLToPath } from 'url'
-import sharp from 'sharp'
+import { Users } from './collections/users';
+import { postgresAdapter } from '@payloadcms/db-postgres';
+import { lexicalEditor } from '@payloadcms/richtext-lexical';
+import path from 'path';
+import { buildConfig } from 'payload';
+import sharp from 'sharp';
+import { fileURLToPath } from 'url';
+import { Categories, Ingredients } from './collections/ingredients';
+import { Recipes } from './collections/recipes';
+import { RecipeIngredients } from './collections/recipe-ingredients';
 
-import { Users } from './collections/Users'
-import { Media } from './collections/Media'
+const filename = fileURLToPath(import.meta.url);
+const dirname = path.dirname(filename);
 
-const filename = fileURLToPath(import.meta.url)
-const dirname = path.dirname(filename)
+// https://stackoverflow.com/questions/72466834/nestjs-logs-have-weird-characters-in-log-management-tools
+process.env.NO_COLOR = 'true';
 
 export default buildConfig({
   admin: {
@@ -18,7 +22,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media],
+  collections: [Users, Categories, Ingredients, Recipes, RecipeIngredients],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
@@ -31,4 +35,4 @@ export default buildConfig({
   }),
   sharp,
   plugins: [],
-})
+});

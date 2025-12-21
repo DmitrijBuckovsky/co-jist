@@ -1,0 +1,1 @@
+export { createDtoAfterReadHook } from './createDtoAfterReadHook';
