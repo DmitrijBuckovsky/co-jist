@@ -1,7 +1,7 @@
 import { withErrorHandling } from '@/core/exceptions';
 import { extractJsonBody } from '@/core/utils/json-body-extractor';
 import type { PayloadRequest } from 'payload';
-import { RecipeMatch, RecipeMatchDB } from '../dtos/recipe-match.dto';
+import { RecipeMatch, RecipeMatchDB, RecipeIngredientDB, RecipeIngredientInfo } from '../dtos/recipe-match.dto';
 
 export const matchRecipesHandler = withErrorHandling(async (req: PayloadRequest) => {
   const body = await extractJsonBody(req);
@@ -52,11 +52,58 @@ export const matchRecipesHandler = withErrorHandling(async (req: PayloadRequest)
 
   const { rows } = await req.payload.db.pool.query<RecipeMatchDB>(query, [sanitizedIds]);
 
+  if (rows.length === 0) {
+    return Response.json({
+      success: true,
+      data: {
+        totalMatches: 0,
+        recipes: [],
+      },
+    });
+  }
+
+  // Get ingredients for all matched recipes
+  const recipeIds = rows.map((r) => r.id);
+  const ingredientsQuery = `
+    WITH user_ingredients AS (
+      SELECT unnest($1::int[]) AS ingredient_id
+    )
+    SELECT
+      ri.recipe_id,
+      ri.ingredient_id,
+      i.name AS ingredient_name,
+      ri.is_main,
+      ri.ingredient_id IN (SELECT ingredient_id FROM user_ingredients) AS have
+    FROM recipe_ingredients ri
+    JOIN ingredients i ON ri.ingredient_id = i.id
+    WHERE ri.recipe_id = ANY($2::int[])
+    ORDER BY ri.is_main DESC, i.name ASC;
+  `;
+
+  const { rows: ingredientRows } = await req.payload.db.pool.query<RecipeIngredientDB>(ingredientsQuery, [
+    sanitizedIds,
+    recipeIds,
+  ]);
+
+  // Group ingredients by recipe_id
+  const ingredientsByRecipe = new Map<number, RecipeIngredientInfo[]>();
+  for (const row of ingredientRows) {
+    const info: RecipeIngredientInfo = {
+      id: row.ingredient_id,
+      name: row.ingredient_name,
+      isMain: row.is_main,
+      have: row.have,
+    };
+    const existing = ingredientsByRecipe.get(row.recipe_id) || [];
+    existing.push(info);
+    ingredientsByRecipe.set(row.recipe_id, existing);
+  }
+
   return Response.json({
     success: true,
     data: {
       totalMatches: rows.length,
-      recipes: rows.map((row) => new RecipeMatch(row)),
+      recipes: rows.map((row) => new RecipeMatch(row, ingredientsByRecipe.get(row.id) || [])),
     },
   });
 });

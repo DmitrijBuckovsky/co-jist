@@ -1,10 +1,6 @@
 import React from 'react';
-import { IngredientSelector } from '@/components/IngredientSelector';
+import { IngredientSelector } from './_components/IngredientSelector';
 
 export default function HomePage() {
-  return (
-    <div className="home">
-      <IngredientSelector />
-    </div>
-  );
+  return <IngredientSelector />;
 }

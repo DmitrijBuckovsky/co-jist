@@ -1,5 +1,5 @@
 import React from 'react';
-import { RecipeDetail } from '@/components/RecipeDetail';
+import { RecipeDetail } from '../../_components/RecipeDetail';
 
 interface RecipePageProps {
   params: Promise<{ id: string }>;

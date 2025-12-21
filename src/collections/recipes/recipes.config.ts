@@ -37,7 +37,7 @@ export const Recipes: CollectionConfig = {
         readOnly: true,
         description: 'Ingredients used in this recipe (managed via Recipe Ingredients)',
         components: {
-          Field: '/components/IngredientsDisplay',
+          Field: '/collections/recipes/components/IngredientsDisplay',
         },
       },
     },
