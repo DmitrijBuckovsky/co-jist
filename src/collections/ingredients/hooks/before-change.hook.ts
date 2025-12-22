@@ -16,7 +16,7 @@ function normalizeText(text: string): string {
  * Auto-generates the name_search field from the name field
  * whenever the name is present (on create or update)
  */
-export const generateNameSearchHook: CollectionBeforeChangeHook = async ({ data, operation, req }) => {
+export const generateNameSearchHook: CollectionBeforeChangeHook = async ({ data }) => {
   // Auto-generate name_search from name whenever name is present
   if (data.name) {
     data.name_search = normalizeText(data.name);

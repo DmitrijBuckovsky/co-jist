@@ -1,1 +1,1 @@
-export { Recipes } from './recipes.config'
+export { Recipes } from './recipes.config';

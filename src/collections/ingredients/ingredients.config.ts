@@ -1,5 +1,5 @@
-import type { CollectionConfig } from 'payload';
 import { generateNameSearchHook } from './hooks';
+import type { CollectionConfig } from 'payload';
 
 export const Ingredients: CollectionConfig = {
   slug: 'ingredients',

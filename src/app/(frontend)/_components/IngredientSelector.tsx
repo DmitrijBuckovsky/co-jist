@@ -1,6 +1,6 @@
 'use client';
-import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 
 interface Category {
   id: number;
@@ -94,7 +94,11 @@ export function IngredientSelector() {
   const toggleIngredient = (id: number) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       localStorage.setItem('selectedIngredients', JSON.stringify(Array.from(next)));
       return next;
     });
@@ -187,11 +191,7 @@ export function IngredientSelector() {
           </button>
         </div>
         <label className="selector-toggle">
-          <input
-            type="checkbox"
-            checked={showSelected}
-            onChange={(e) => setShowSelected(e.target.checked)}
-          />
+          <input type="checkbox" checked={showSelected} onChange={(e) => setShowSelected(e.target.checked)} />
           Selected ({selected.size})
         </label>
         <button

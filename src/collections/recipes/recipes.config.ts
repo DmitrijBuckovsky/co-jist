@@ -1,5 +1,5 @@
-import type { CollectionConfig } from 'payload';
 import { matchRecipes } from './endpoints';
+import type { CollectionConfig } from 'payload';
 
 export const Recipes: CollectionConfig = {
   slug: 'recipes',

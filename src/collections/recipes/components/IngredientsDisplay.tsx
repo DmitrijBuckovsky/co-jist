@@ -1,6 +1,6 @@
 'use client';
-import { useEffect, useState } from 'react';
 import { useDocumentInfo } from '@payloadcms/ui';
+import { useEffect, useState } from 'react';
 
 interface IngredientDisplay {
   amount: string;

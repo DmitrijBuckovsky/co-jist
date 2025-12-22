@@ -1,5 +1,5 @@
-import { Endpoint } from 'payload';
 import { matchRecipesHandler } from './match-recipes.handler';
+import { Endpoint } from 'payload';
 
 export const matchRecipes: Endpoint = {
   method: 'post',

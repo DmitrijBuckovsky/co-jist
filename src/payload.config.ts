@@ -1,13 +1,14 @@
+import { Categories, Ingredients } from './collections/ingredients';
+import { RecipeIngredients } from './collections/recipe-ingredients';
+import { Recipes } from './collections/recipes';
 import { Users } from './collections/users';
+import { migrations } from './migrations';
 import { postgresAdapter } from '@payloadcms/db-postgres';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import path from 'path';
 import { buildConfig } from 'payload';
 import sharp from 'sharp';
 import { fileURLToPath } from 'url';
-import { Categories, Ingredients } from './collections/ingredients';
-import { Recipes } from './collections/recipes';
-import { RecipeIngredients } from './collections/recipe-ingredients';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -32,6 +33,8 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL || '',
     },
+    push: false,
+    prodMigrations: migrations,
   }),
   sharp,
   plugins: [],
