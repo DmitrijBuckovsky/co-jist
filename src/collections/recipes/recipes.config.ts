@@ -1,8 +1,15 @@
+import { anyone, isAdmin } from '@/core/access';
 import { matchRecipes } from './endpoints';
 import type { CollectionConfig } from 'payload';
 
 export const Recipes: CollectionConfig = {
   slug: 'recipes',
+  access: {
+    read: anyone,
+    create: isAdmin,
+    update: isAdmin,
+    delete: isAdmin,
+  },
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['id', 'name', 'prep_time_mins'],

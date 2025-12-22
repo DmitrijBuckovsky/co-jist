@@ -1,7 +1,14 @@
+import { anyone, isAdmin } from '@/core/access';
 import type { CollectionConfig } from 'payload';
 
 export const RecipeIngredients: CollectionConfig = {
   slug: 'recipe-ingredients',
+  access: {
+    read: anyone,
+    create: isAdmin,
+    update: isAdmin,
+    delete: isAdmin,
+  },
   admin: {
     useAsTitle: 'amount',
     defaultColumns: ['recipe', 'ingredient', 'amount', 'is_main'],

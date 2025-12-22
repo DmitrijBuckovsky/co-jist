@@ -1,8 +1,15 @@
+import { anyone, isAdmin } from '@/core/access';
 import { generateNameSearchHook } from './hooks';
 import type { CollectionConfig } from 'payload';
 
 export const Ingredients: CollectionConfig = {
   slug: 'ingredients',
+  access: {
+    read: anyone,
+    create: isAdmin,
+    update: isAdmin,
+    delete: isAdmin,
+  },
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['id', 'name', 'category'],
