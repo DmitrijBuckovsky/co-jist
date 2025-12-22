@@ -1,5 +1,6 @@
-import { anyone, isAdmin } from '@/core/access';
 import { matchRecipes } from './endpoints';
+import { syncIngredientsHook } from './hooks';
+import { anyone, isAdmin } from '@/core/access';
 import type { CollectionConfig } from 'payload';
 
 export const Recipes: CollectionConfig = {
@@ -16,6 +17,9 @@ export const Recipes: CollectionConfig = {
     group: 'Recipe Management',
   },
   endpoints: [matchRecipes],
+  hooks: {
+    afterChange: [syncIngredientsHook],
+  },
   fields: [
     {
       name: 'name',
@@ -35,16 +39,21 @@ export const Recipes: CollectionConfig = {
         description: 'Preparation time in minutes',
       },
     },
-    // Virtual field to display ingredients
+    // Hidden JSON field to store ingredient data during form submission
     {
-      name: 'ingredients_display',
-      type: 'text',
-      virtual: true,
+      name: 'ingredients_data',
+      type: 'json',
       admin: {
-        readOnly: true,
-        description: 'Ingredients used in this recipe (managed via Recipe Ingredients)',
+        hidden: true,
+      },
+    },
+    // UI field for inline ingredient editing
+    {
+      name: 'ingredients_editor',
+      type: 'ui',
+      admin: {
         components: {
-          Field: '/collections/recipes/components/IngredientsDisplay',
+          Field: '/collections/recipes/components/IngredientsEditor',
         },
       },
     },

@@ -1,5 +1,5 @@
-import { anyone, isAdmin } from '@/core/access';
 import { generateNameSearchHook } from './hooks';
+import { anyone, isAdmin } from '@/core/access';
 import type { CollectionConfig } from 'payload';
 
 export const Ingredients: CollectionConfig = {

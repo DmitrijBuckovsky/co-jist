@@ -4,7 +4,7 @@ import type { CollectionBeforeChangeHook } from 'payload';
  * Normalizes text by removing diacritics (accents) and converting to lowercase
  * Example: "Café" -> "cafe", "Müller" -> "muller"
  */
-function normalizeText(text: string): string {
+export function normalizeText(text: string): string {
   return text
     .normalize('NFD') // Decompose characters into base + combining marks
     .replace(/[\u0300-\u036f]/g, '') // Remove combining diacritical marks

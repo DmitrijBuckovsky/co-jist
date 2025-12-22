@@ -204,10 +204,15 @@ export interface Recipe {
    * Preparation time in minutes
    */
   prep_time_mins?: number | null;
-  /**
-   * Ingredients used in this recipe (managed via Recipe Ingredients)
-   */
-  ingredients_display?: string | null;
+  ingredients_data?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -352,7 +357,7 @@ export interface RecipesSelect<T extends boolean = true> {
   name?: T;
   instructions?: T;
   prep_time_mins?: T;
-  ingredients_display?: T;
+  ingredients_data?: T;
   updatedAt?: T;
   createdAt?: T;
 }
