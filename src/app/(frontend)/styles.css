@@ -193,6 +193,10 @@ svg {
   padding-bottom: 12px;
   flex-shrink: 0;
   background: rgb(0, 0, 0);
+
+  @media (max-width: 600px) {
+    flex-wrap: wrap;
+  }
 }
 
 .selector-search {
@@ -208,6 +212,10 @@ svg {
   &:focus {
     outline: none;
     border-color: rgb(0, 123, 255);
+  }
+
+  @media (max-width: 600px) {
+    min-width: 100%;
   }
 }
 
@@ -698,6 +706,7 @@ svg {
     align-items: center;
     justify-content: center;
     border-radius: 50%;
+    z-index: 10;
 
     &:hover {
       background: rgba(255, 255, 255, 0.1);
@@ -760,6 +769,12 @@ svg {
   max-width: 1000px;
   margin: 0 auto;
   width: 100%;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
 }
 
 .filter-section {
@@ -772,11 +787,13 @@ svg {
   font-size: 13px;
   color: rgb(120, 120, 120);
   font-weight: 500;
+  min-width: 80px;
 }
 
 .difficulty-options {
   display: flex;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
 .difficulty-btn {
