@@ -6,7 +6,7 @@ import type { PayloadRequest } from 'payload';
 
 export const matchRecipesHandler = withErrorHandling(async (req: PayloadRequest) => {
   const body = await extractJsonBody(req);
-  const { ingredientIds }: { ingredientIds?: number[] } = body;
+  const { ingredientIds, difficulty, maxPrepTime }: { ingredientIds?: number[]; difficulty?: string[]; maxPrepTime?: number } = body;
   const sanitizedIds = Array.isArray(ingredientIds)
     ? ingredientIds.map(Number).filter((id) => Number.isInteger(id))
     : [];
@@ -14,6 +14,31 @@ export const matchRecipesHandler = withErrorHandling(async (req: PayloadRequest)
   if (sanitizedIds.length === 0) {
     return Response.json({ error: 'ingredientIds array is required and must not be empty' }, { status: 400 });
   }
+
+  // Validate difficulty values
+  const validDifficulties = ['easy', 'medium', 'hard'];
+  const sanitizedDifficulty = Array.isArray(difficulty)
+    ? difficulty.filter((d) => validDifficulties.includes(d))
+    : [];
+
+  // Validate maxPrepTime
+  const validMaxPrepTime = typeof maxPrepTime === 'number' && maxPrepTime > 0 ? maxPrepTime : null;
+
+  // Build filter clauses
+  const filters: string[] = [];
+  const params: any[] = [sanitizedIds];
+
+  if (sanitizedDifficulty.length > 0) {
+    params.push(sanitizedDifficulty);
+    filters.push(`r.difficulty IS NOT NULL AND r.difficulty::text = ANY($${params.length}::text[])`);
+  }
+
+  if (validMaxPrepTime !== null) {
+    params.push(validMaxPrepTime);
+    filters.push(`r.prep_time_mins <= $${params.length}`);
+  }
+
+  const whereClause = filters.length > 0 ? `AND ${filters.join(' AND ')}` : '';
 
   // Use parameterized SQL to score recipes server-side without loading everything into memory
   const query = `
@@ -24,6 +49,8 @@ export const matchRecipesHandler = withErrorHandling(async (req: PayloadRequest)
       SELECT
         r.id,
         r.name,
+        r.difficulty,
+        r.prep_time_mins,
         COUNT(*) FILTER (WHERE ri.is_main) AS main_total,
         COUNT(*) FILTER (WHERE ri.is_main AND ri.ingredient_id IN (SELECT ingredient_id FROM user_ingredients)) AS main_have,
         COUNT(*) FILTER (WHERE NOT ri.is_main) AS secondary_total,
@@ -33,11 +60,14 @@ export const matchRecipesHandler = withErrorHandling(async (req: PayloadRequest)
         COUNT(*) FILTER (WHERE ri.ingredient_id NOT IN (SELECT ingredient_id FROM user_ingredients)) AS missing_total
       FROM recipes r
       JOIN recipe_ingredients ri ON r.id = ri.recipe_id
-      GROUP BY r.id, r.name
+      WHERE 1=1 ${whereClause}
+      GROUP BY r.id, r.name, r.difficulty, r.prep_time_mins
     )
     SELECT
       id,
       name,
+      difficulty,
+      prep_time_mins,
       main_total,
       main_have,
       secondary_total,
@@ -51,7 +81,7 @@ export const matchRecipesHandler = withErrorHandling(async (req: PayloadRequest)
     ORDER BY score DESC;
   `;
 
-  const { rows } = await req.payload.db.pool.query<RecipeMatchDB>(query, [sanitizedIds]);
+  const { rows } = await req.payload.db.pool.query<RecipeMatchDB>(query, params);
 
   if (rows.length === 0) {
     return Response.json({

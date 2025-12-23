@@ -8,6 +8,8 @@ export interface RecipeIngredientInfo {
 export class RecipeMatch {
   id: number;
   name: string;
+  difficulty: string | null;
+  prepTimeMins: number | null;
   mainTotal: number;
   mainHave: number;
   secondaryTotal: number;
@@ -21,6 +23,8 @@ export class RecipeMatch {
   constructor(dbEntity: RecipeMatchDB, ingredients: RecipeIngredientInfo[] = []) {
     this.id = dbEntity.id;
     this.name = dbEntity.name;
+    this.difficulty = dbEntity.difficulty;
+    this.prepTimeMins = dbEntity.prep_time_mins;
     this.mainTotal = Number(dbEntity.main_total);
     this.mainHave = Number(dbEntity.main_have);
     this.secondaryTotal = Number(dbEntity.secondary_total);
@@ -36,6 +40,8 @@ export class RecipeMatch {
 export interface RecipeMatchDB {
   id: number;
   name: string;
+  difficulty: string | null;
+  prep_time_mins: number | null;
   main_total: string;
   main_have: string;
   secondary_total: string;

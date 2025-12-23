@@ -199,11 +199,13 @@ export interface RecipeIngredient {
 export interface Recipe {
   id: number;
   name: string;
+  name_search: string;
   instructions: string;
   /**
    * Preparation time in minutes
    */
   prep_time_mins?: number | null;
+  difficulty?: ('easy' | 'medium' | 'hard') | null;
   ingredients_data?:
     | {
         [k: string]: unknown;
@@ -355,8 +357,10 @@ export interface IngredientsSelect<T extends boolean = true> {
  */
 export interface RecipesSelect<T extends boolean = true> {
   name?: T;
+  name_search?: T;
   instructions?: T;
   prep_time_mins?: T;
+  difficulty?: T;
   ingredients_data?: T;
   updatedAt?: T;
   createdAt?: T;

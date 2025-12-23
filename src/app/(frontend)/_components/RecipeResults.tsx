@@ -3,6 +3,7 @@ import { PageHeader } from './PageHeader';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { getDifficultyLabel } from '../_utils/difficulty';
 
 interface RecipeIngredient {
   id: number;
@@ -14,6 +15,8 @@ interface RecipeIngredient {
 interface RecipeMatch {
   id: number;
   name: string;
+  difficulty: string | null;
+  prepTimeMins: number | null;
   mainTotal: number;
   mainHave: number;
   secondaryTotal: number;
@@ -57,7 +60,7 @@ export function RecipeResults() {
       <div className="page-container">
         <div className="page-loading">
           <div className="spinner" />
-          <p>Loading...</p>
+          <p>Načítání...</p>
         </div>
       </div>
     );
@@ -66,21 +69,24 @@ export function RecipeResults() {
   if (!results || results.recipes.length === 0) {
     return (
       <div className="page-container">
-        <PageHeader title="No recipes found" />
-        <p className="page-message">Try selecting more ingredients</p>
+        <PageHeader title="Žádné recepty nenalezeny" />
+        <p className="page-message">Zkuste vybrat více ingrediencí</p>
       </div>
     );
   }
 
   return (
     <div className="page-container">
-      <PageHeader title={`${results.totalMatches} Recipe${results.totalMatches !== 1 ? 's' : ''}`} />
+      <PageHeader title={`${results.totalMatches} ${results.totalMatches === 1 ? 'recept' : results.totalMatches < 5 ? 'recepty' : 'receptů'}`} />
 
       <div className="results-list">
         {results.recipes.map((recipe) => (
           <Link key={recipe.id} href={`/recipe/${recipe.id}`} className="results-card">
             <div className="results-card-content">
-              <h2>{recipe.name}</h2>
+              <div className="results-card-header">
+                <h2>{recipe.name}</h2>
+                {recipe.difficulty && <span className={`difficulty-badge ${recipe.difficulty}`}>{getDifficultyLabel(recipe.difficulty)}</span>}
+              </div>
               <div className="results-card-ingredients">
                 {recipe.ingredients.map((ing) => (
                   <span
@@ -92,7 +98,10 @@ export function RecipeResults() {
                 ))}
               </div>
             </div>
-            <span className="results-card-score">{recipe.score}</span>
+            <div className="results-card-right">
+              {recipe.prepTimeMins && <span className="results-card-time">{recipe.prepTimeMins} min</span>}
+              <span className="results-card-score">{recipe.score}</span>
+            </div>
           </Link>
         ))}
       </div>

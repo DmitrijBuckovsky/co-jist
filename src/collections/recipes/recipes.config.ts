@@ -1,5 +1,5 @@
-import { matchRecipes } from './endpoints';
-import { syncIngredientsHook } from './hooks';
+import { matchRecipes, searchRecipes } from './endpoints';
+import { generateNameSearchHook, syncIngredientsHook } from './hooks';
 import { anyone, isAdmin } from '@/core/access';
 import type { CollectionConfig } from 'payload';
 
@@ -16,8 +16,9 @@ export const Recipes: CollectionConfig = {
     defaultColumns: ['id', 'name', 'prep_time_mins'],
     group: 'Recipe Management',
   },
-  endpoints: [matchRecipes],
+  endpoints: [matchRecipes, searchRecipes],
   hooks: {
+    beforeChange: [generateNameSearchHook],
     afterChange: [syncIngredientsHook],
   },
   fields: [
@@ -25,6 +26,16 @@ export const Recipes: CollectionConfig = {
       name: 'name',
       type: 'text',
       required: true,
+    },
+    {
+      name: 'name_search',
+      type: 'text',
+      required: true,
+      unique: false,
+      admin: {
+        hidden: true,
+        readOnly: true,
+      },
     },
     {
       name: 'instructions',
@@ -35,9 +46,20 @@ export const Recipes: CollectionConfig = {
       name: 'prep_time_mins',
       type: 'number',
       min: 0,
+      label: 'Prep Time (mins)',
       admin: {
         description: 'Preparation time in minutes',
       },
+    },
+    {
+      name: 'difficulty',
+      type: 'select',
+      options: [
+        { label: 'Easy', value: 'easy' },
+        { label: 'Medium', value: 'medium' },
+        { label: 'Hard', value: 'hard' },
+      ],
+      required: false,
     },
     // Hidden JSON field to store ingredient data during form submission
     {

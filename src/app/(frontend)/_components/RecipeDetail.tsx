@@ -1,6 +1,7 @@
 'use client';
 import { PageHeader } from './PageHeader';
 import { useEffect, useState } from 'react';
+import { getDifficultyLabel } from '../_utils/difficulty';
 
 interface RecipeIngredient {
   id: number;
@@ -17,6 +18,7 @@ interface RecipeIngredient {
 interface Recipe {
   id: number;
   name: string;
+  difficulty?: string;
   instructions?: string;
   prep_time_mins?: number;
   servings?: number;
@@ -70,7 +72,7 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
       <div className="page-container">
         <div className="page-loading">
           <div className="spinner" />
-          <p>Loading...</p>
+          <p>Načítání...</p>
         </div>
       </div>
     );
@@ -79,7 +81,7 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
   if (error || !recipe) {
     return (
       <div className="page-container">
-        <PageHeader title="Not Found" />
+        <PageHeader title="Nenalezeno" />
       </div>
     );
   }
@@ -91,8 +93,11 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
     <div className="page-container">
       <PageHeader title={recipe.name} />
 
-      {(recipe.prep_time_mins || recipe.servings) && (
+      {(recipe.difficulty || recipe.prep_time_mins || recipe.servings) && (
         <div className="detail-meta">
+          {recipe.difficulty && (
+            <span className={`difficulty-badge ${recipe.difficulty}`}>{getDifficultyLabel(recipe.difficulty)}</span>
+          )}
           {recipe.prep_time_mins && <span>{recipe.prep_time_mins} min</span>}
           {recipe.servings && <span>{recipe.servings} servings</span>}
         </div>
@@ -100,11 +105,11 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
 
       <div className="detail-grid">
         <section className="detail-section">
-          <h2>Ingredients</h2>
+          <h2>Ingredience</h2>
 
           {main.length > 0 && (
             <div className="ingredients-group">
-              <h3>Main</h3>
+              <h3>Hlavní</h3>
               <ul className="detail-ingredients">
                 {main.map((ri) => {
                   const ing = typeof ri.ingredient === 'object' ? ri.ingredient : null;
@@ -123,7 +128,7 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
 
           {extra.length > 0 && (
             <div className="ingredients-group">
-              <h3>Optional</h3>
+              <h3>Doplňkové</h3>
               <ul className="detail-ingredients">
                 {extra.map((ri) => {
                   const ing = typeof ri.ingredient === 'object' ? ri.ingredient : null;
@@ -143,7 +148,7 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
 
         {recipe.instructions && (
           <section className="detail-section">
-            <h2>Instructions</h2>
+            <h2>Postup</h2>
             <div className="detail-instructions">
               {recipe.instructions.split('\n').map((step, i) => step.trim() && <p key={i}>{step}</p>)}
             </div>

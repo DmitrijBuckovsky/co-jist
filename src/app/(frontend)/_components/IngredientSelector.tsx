@@ -2,6 +2,9 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
+// Remove diacritics from string for search comparison
+const removeDiacritics = (str: string) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
 interface Category {
   id: number;
   name: string;
@@ -13,7 +16,12 @@ interface Ingredient {
   category: Category | number;
 }
 
-export function IngredientSelector() {
+interface IngredientSelectorProps {
+  selectedDifficulties?: string[];
+  maxPrepTime?: number | null;
+}
+
+export function IngredientSelector({ selectedDifficulties = [], maxPrepTime = null }: IngredientSelectorProps) {
   const router = useRouter();
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
@@ -45,7 +53,7 @@ export function IngredientSelector() {
 
       setIngredients(sorted);
     } catch (err) {
-      setError('Failed to load ingredients');
+      setError('Nepodařilo se načíst ingredience');
       console.error(err);
     } finally {
       setLoading(false);
@@ -60,8 +68,8 @@ export function IngredientSelector() {
     }
 
     if (search) {
-      const query = search.toLowerCase();
-      result = result.filter((i) => i.name.toLowerCase().includes(query));
+      const query = removeDiacritics(search.toLowerCase());
+      result = result.filter((i) => removeDiacritics(i.name.toLowerCase()).includes(query));
     }
 
     return result;
@@ -111,7 +119,7 @@ export function IngredientSelector() {
 
   const findRecipes = async () => {
     if (selected.size === 0) {
-      setError('Select at least one ingredient');
+      setError('Vyberte alespoň jednu ingredienci');
       return;
     }
 
@@ -119,10 +127,20 @@ export function IngredientSelector() {
     setError(null);
 
     try {
+      const requestBody: { ingredientIds: number[]; difficulty?: string[]; maxPrepTime?: number } = {
+        ingredientIds: Array.from(selected),
+      };
+      if (selectedDifficulties.length > 0) {
+        requestBody.difficulty = selectedDifficulties;
+      }
+      if (maxPrepTime !== null) {
+        requestBody.maxPrepTime = maxPrepTime;
+      }
+
       const response = await fetch('/api/recipes/match-recipes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ingredientIds: Array.from(selected) }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) throw new Error('Search failed');
@@ -132,7 +150,7 @@ export function IngredientSelector() {
       localStorage.setItem('selectedIngredients', JSON.stringify(Array.from(selected)));
       router.push('/results');
     } catch (err) {
-      setError('Failed to find recipes. Try again.');
+      setError('Nepodařilo se najít recepty. Zkuste znovu.');
       console.error(err);
     } finally {
       setSearching(false);
@@ -141,10 +159,9 @@ export function IngredientSelector() {
 
   if (loading) {
     return (
-      <div className="page-container">
+      <div className="selector-page">
         <div className="page-loading">
-          <div className="spinner" />
-          <p>Loading...</p>
+          <p>Načítání...</p>
         </div>
       </div>
     );
@@ -161,9 +178,9 @@ export function IngredientSelector() {
   );
 
   return (
-    <div className="page-container selector-page">
-      <header className="page-header">
-        <h1>What's in your kitchen?</h1>
+    <div className="selector-page">
+      <header className="selector-header">
+        <h1>Co máš v kuchyni?</h1>
       </header>
 
       {error && <div className="selector-error">{error}</div>}
@@ -171,7 +188,7 @@ export function IngredientSelector() {
       <div className="selector-controls">
         <input
           type="text"
-          placeholder="Search..."
+          placeholder="Hledat..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="selector-search"
@@ -187,25 +204,25 @@ export function IngredientSelector() {
             className={`selector-view-btn ${viewMode === 'grouped' ? 'active' : ''}`}
             onClick={() => setViewMode('grouped')}
           >
-            Groups
+            Skupiny
           </button>
         </div>
         <label className="selector-toggle">
           <input type="checkbox" checked={showSelected} onChange={(e) => setShowSelected(e.target.checked)} />
-          Selected ({selected.size})
+          Vybráno ({selected.size})
         </label>
         <button
           onClick={clearAll}
           className="selector-clear-btn"
           style={{ visibility: selected.size > 0 ? 'visible' : 'hidden' }}
         >
-          Clear
+          Smazat
         </button>
       </div>
 
       <div className="selector-list">
         {filtered.length === 0 ? (
-          <div className="selector-empty">{search ? 'No matches' : 'No ingredients'}</div>
+          <div className="selector-empty">{search ? 'Nic nenalezeno' : 'Žádné ingredience'}</div>
         ) : (
           <div className="selector-groups">
             {grouped.map(([groupName, items]) => (
@@ -220,7 +237,7 @@ export function IngredientSelector() {
 
       <div className="selector-footer">
         <button onClick={findRecipes} disabled={selected.size === 0 || searching} className="selector-submit">
-          {searching ? 'Searching...' : `Find Recipes (${selected.size})`}
+          {searching ? 'Hledám...' : `Najít recepty (${selected.size})`}
         </button>
       </div>
     </div>

@@ -13,7 +13,7 @@ export function PageHeader({ title, showBack = true }: PageHeaderProps) {
     <header className="page-header">
       {showBack && (
         <button onClick={() => router.back()} className="page-header-back">
-          ← Back
+          ← Zpět
         </button>
       )}
       <h1>{title}</h1>
