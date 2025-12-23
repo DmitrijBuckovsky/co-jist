@@ -2,10 +2,11 @@
 import { AllRecipes } from './_components/AllRecipes';
 import { IngredientSelector } from './_components/IngredientSelector';
 import { RecipeSearch } from './_components/RecipeSearch';
+import { RandomRecipes } from './_components/RandomRecipes';
 import { Difficulty, DIFFICULTY_LABELS } from './_utils/difficulty';
 import React, { useEffect, useState } from 'react';
 
-type View = 'all' | 'search' | 'match';
+type View = 'all' | 'search' | 'match' | 'random';
 
 export default function HomePage() {
   const [selectedDifficulties, setSelectedDifficulties] = useState<Set<Difficulty>>(new Set());
@@ -61,38 +62,43 @@ export default function HomePage() {
         <button className={`view-btn ${view === 'all' ? 'active' : ''}`} onClick={() => setView('all')}>
           Všechny
         </button>
+        <button className={`view-btn ${view === 'random' ? 'active' : ''}`} onClick={() => setView('random')}>
+          Náhodné
+        </button>
       </div>
 
-      <div className="difficulty-filter">
-        <div className="filter-section">
-          <span className="difficulty-label">Obtížnost:</span>
-          <div className="difficulty-options">
-            {Object.values(Difficulty).map((diff) => (
-              <button
-                key={diff}
-                className={`difficulty-btn ${selectedDifficulties.has(diff) ? 'active' : ''}`}
-                onClick={() => toggleDifficulty(diff)}
-              >
-                {DIFFICULTY_LABELS[diff]}
-              </button>
-            ))}
+      {view !== 'random' && (
+        <div className="difficulty-filter">
+          <div className="filter-section">
+            <span className="difficulty-label">Obtížnost:</span>
+            <div className="difficulty-options">
+              {Object.values(Difficulty).map((diff) => (
+                <button
+                  key={diff}
+                  className={`difficulty-btn ${selectedDifficulties.has(diff) ? 'active' : ''}`}
+                  onClick={() => toggleDifficulty(diff)}
+                >
+                  {DIFFICULTY_LABELS[diff]}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="filter-section">
+            <span className="difficulty-label">Max. čas:</span>
+            <div className="difficulty-options">
+              {[30, 45, 60, 90].map((time) => (
+                <button
+                  key={time}
+                  className={`difficulty-btn ${maxPrepTime === time ? 'active' : ''}`}
+                  onClick={() => handleMaxPrepTimeChange(maxPrepTime === time ? null : time)}
+                >
+                  {time} min
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-        <div className="filter-section">
-          <span className="difficulty-label">Max. čas:</span>
-          <div className="difficulty-options">
-            {[30, 45, 60, 90].map((time) => (
-              <button
-                key={time}
-                className={`difficulty-btn ${maxPrepTime === time ? 'active' : ''}`}
-                onClick={() => handleMaxPrepTimeChange(maxPrepTime === time ? null : time)}
-              >
-                {time} min
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      )}
 
       <div className="view-content">
         {view === 'match' && (
@@ -104,6 +110,7 @@ export default function HomePage() {
         {view === 'all' && (
           <AllRecipes selectedDifficulties={Array.from(selectedDifficulties)} maxPrepTime={maxPrepTime} />
         )}
+        {view === 'random' && <RandomRecipes />}
       </div>
     </div>
   );

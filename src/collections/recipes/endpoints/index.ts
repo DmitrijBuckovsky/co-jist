@@ -1,6 +1,7 @@
 import { listRecipesHandler } from './list-recipes.handler';
 import { matchRecipesHandler } from './match-recipes.handler';
 import { searchRecipesHandler } from './search-recipes.handler';
+import { randomRecipesHandler } from './random-recipes.handler';
 import { Endpoint } from 'payload';
 
 export const matchRecipes: Endpoint = {
@@ -19,4 +20,10 @@ export const listRecipes: Endpoint = {
   method: 'post',
   handler: listRecipesHandler,
   path: '/list-recipes',
+};
+
+export const randomRecipes: Endpoint = {
+  method: 'get',
+  handler: randomRecipesHandler,
+  path: '/random-recipes',
 };

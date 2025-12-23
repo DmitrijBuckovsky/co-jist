@@ -1,4 +1,4 @@
-import { listRecipes, matchRecipes, searchRecipes } from './endpoints';
+import { listRecipes, matchRecipes, randomRecipes, searchRecipes } from './endpoints';
 import { generateNameSearchHook, syncIngredientsHook } from './hooks';
 import { anyone, isAdmin } from '@/core/access';
 import type { CollectionConfig } from 'payload';
@@ -16,7 +16,7 @@ export const Recipes: CollectionConfig = {
     defaultColumns: ['id', 'name', 'prep_time_mins'],
     group: 'Recipe Management',
   },
-  endpoints: [matchRecipes, searchRecipes, listRecipes],
+  endpoints: [matchRecipes, searchRecipes, listRecipes, randomRecipes],
   hooks: {
     beforeChange: [generateNameSearchHook],
     afterChange: [syncIngredientsHook],
