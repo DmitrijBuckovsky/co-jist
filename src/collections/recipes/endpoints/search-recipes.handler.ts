@@ -1,4 +1,5 @@
 import { SIMILARITY } from '@/constants';
+
 import { withErrorHandling } from '@/core/exceptions';
 import { extractJsonBody } from '@/core/utils/json-body-extractor';
 import type { PayloadRequest } from 'payload';
@@ -76,7 +77,13 @@ export const searchRecipesHandler = withErrorHandling(async (req: PayloadRequest
 
   // Use PostgreSQL trigram similarity for fuzzy matching
   // Falls back to LIKE if pg_trgm extension is not available
-  let results: { id: number; name: string; difficulty: string | null; prep_time_mins: number | null; similarity: number }[] = [];
+  let results: {
+    id: number;
+    name: string;
+    difficulty: string | null;
+    prep_time_mins: number | null;
+    similarity: number;
+  }[] = [];
 
   try {
     // Query using pg_trgm similarity function

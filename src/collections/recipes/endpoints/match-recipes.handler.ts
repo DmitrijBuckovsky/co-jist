@@ -6,7 +6,11 @@ import type { PayloadRequest } from 'payload';
 
 export const matchRecipesHandler = withErrorHandling(async (req: PayloadRequest) => {
   const body = await extractJsonBody(req);
-  const { ingredientIds, difficulty, maxPrepTime }: { ingredientIds?: number[]; difficulty?: string[]; maxPrepTime?: number } = body;
+  const {
+    ingredientIds,
+    difficulty,
+    maxPrepTime,
+  }: { ingredientIds?: number[]; difficulty?: string[]; maxPrepTime?: number } = body;
   const sanitizedIds = Array.isArray(ingredientIds)
     ? ingredientIds.map(Number).filter((id) => Number.isInteger(id))
     : [];
@@ -17,9 +21,7 @@ export const matchRecipesHandler = withErrorHandling(async (req: PayloadRequest)
 
   // Validate difficulty values
   const validDifficulties = ['easy', 'medium', 'hard'];
-  const sanitizedDifficulty = Array.isArray(difficulty)
-    ? difficulty.filter((d) => validDifficulties.includes(d))
-    : [];
+  const sanitizedDifficulty = Array.isArray(difficulty) ? difficulty.filter((d) => validDifficulties.includes(d)) : [];
 
   // Validate maxPrepTime
   const validMaxPrepTime = typeof maxPrepTime === 'number' && maxPrepTime > 0 ? maxPrepTime : null;

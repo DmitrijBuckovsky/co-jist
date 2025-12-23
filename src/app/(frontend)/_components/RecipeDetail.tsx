@@ -1,7 +1,7 @@
 'use client';
+import { getDifficultyLabel } from '../_utils/difficulty';
 import { PageHeader } from './PageHeader';
 import { useEffect, useState } from 'react';
-import { getDifficultyLabel } from '../_utils/difficulty';
 
 interface RecipeIngredient {
   id: number;

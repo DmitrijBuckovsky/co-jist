@@ -1,7 +1,7 @@
 'use client';
+import { getDifficultyLabel } from '../_utils/difficulty';
 import Link from 'next/link';
 import { useState } from 'react';
-import { getDifficultyLabel } from '../_utils/difficulty';
 
 interface RecipeSearchResult {
   id: number;
@@ -102,7 +102,11 @@ export function RecipeSearch({ selectedDifficulties = [], maxPrepTime = null }: 
                 <Link key={recipe.id} href={`/recipe/${recipe.id}`} className="recipe-search-item">
                   <div className="recipe-search-content">
                     <span className="recipe-search-name">{recipe.name}</span>
-                    {recipe.difficulty && <span className={`difficulty-badge ${recipe.difficulty}`}>{getDifficultyLabel(recipe.difficulty)}</span>}
+                    {recipe.difficulty && (
+                      <span className={`difficulty-badge ${recipe.difficulty}`}>
+                        {getDifficultyLabel(recipe.difficulty)}
+                      </span>
+                    )}
                   </div>
                   {recipe.prep_time_mins && <span className="recipe-search-time">{recipe.prep_time_mins} min</span>}
                 </Link>

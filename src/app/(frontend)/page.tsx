@@ -1,8 +1,8 @@
 'use client';
 import { IngredientSelector } from './_components/IngredientSelector';
 import { RecipeSearch } from './_components/RecipeSearch';
-import React, { useEffect, useState } from 'react';
 import { Difficulty, DIFFICULTY_LABELS } from './_utils/difficulty';
+import React, { useEffect, useState } from 'react';
 
 export default function HomePage() {
   const [selectedDifficulties, setSelectedDifficulties] = useState<Set<Difficulty>>(new Set());

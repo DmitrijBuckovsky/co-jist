@@ -1,9 +1,9 @@
 'use client';
+import { getDifficultyLabel } from '../_utils/difficulty';
 import { PageHeader } from './PageHeader';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getDifficultyLabel } from '../_utils/difficulty';
 
 interface RecipeIngredient {
   id: number;
@@ -77,7 +77,9 @@ export function RecipeResults() {
 
   return (
     <div className="page-container">
-      <PageHeader title={`${results.totalMatches} ${results.totalMatches === 1 ? 'recept' : results.totalMatches < 5 ? 'recepty' : 'receptů'}`} />
+      <PageHeader
+        title={`${results.totalMatches} ${results.totalMatches === 1 ? 'recept' : results.totalMatches < 5 ? 'recepty' : 'receptů'}`}
+      />
 
       <div className="results-list">
         {results.recipes.map((recipe) => (
@@ -85,7 +87,11 @@ export function RecipeResults() {
             <div className="results-card-content">
               <div className="results-card-header">
                 <h2>{recipe.name}</h2>
-                {recipe.difficulty && <span className={`difficulty-badge ${recipe.difficulty}`}>{getDifficultyLabel(recipe.difficulty)}</span>}
+                {recipe.difficulty && (
+                  <span className={`difficulty-badge ${recipe.difficulty}`}>
+                    {getDifficultyLabel(recipe.difficulty)}
+                  </span>
+                )}
               </div>
               <div className="results-card-ingredients">
                 {recipe.ingredients.map((ing) => (
