@@ -182,7 +182,7 @@ export async function seedData(payload: Payload): Promise<void> {
       ],
     },
     {
-      name: 'Guláš',
+      name: 'Hovězí guláš',
       difficulty: 'medium' as const,
       instructions: `1. Hovězí maso nakrájejte na kostky, osolte a opepřete.
 2. Na sádle orestujte nakrájenou cibuli do zlatova.
@@ -254,7 +254,7 @@ export async function seedData(payload: Payload): Promise<void> {
       ],
     },
     {
-      name: 'Řízek',
+      name: 'Vepřový řízek',
       difficulty: 'easy' as const,
       instructions: `1. Maso naklepejte, osolte a opepřete.
 2. Obalte postupně v mouce, rozšlehaném vejci a strouhance.

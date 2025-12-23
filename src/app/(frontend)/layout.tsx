@@ -2,8 +2,14 @@ import './styles.css';
 import React from 'react';
 
 export const metadata = {
-  description: 'A blank template using Payload in a Next.js app.',
-  title: 'Payload Blank Template',
+  description: 'Najděte recepty podle ingrediencí, které máte doma.',
+  title: 'Co jíst? - Recepty podle ingrediencí',
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
 };
 
 export default async function RootLayout(props: { children: React.ReactNode }) {

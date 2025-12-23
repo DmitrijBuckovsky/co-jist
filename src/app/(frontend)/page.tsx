@@ -47,7 +47,6 @@ export default function HomePage() {
 
   return (
     <div className="main-page">
-      <RecipeSearch selectedDifficulties={Array.from(selectedDifficulties)} maxPrepTime={maxPrepTime} />
       <div className="difficulty-filter">
         <div className="filter-section">
           <span className="difficulty-label">Obtížnost:</span>
@@ -78,6 +77,7 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+      <RecipeSearch selectedDifficulties={Array.from(selectedDifficulties)} maxPrepTime={maxPrepTime} />
       <IngredientSelector selectedDifficulties={Array.from(selectedDifficulties)} maxPrepTime={maxPrepTime} />
     </div>
   );

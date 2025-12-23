@@ -173,6 +173,12 @@ svg {
   max-width: 1000px;
   margin: 0 auto;
   width: 100%;
+
+  @media (max-width: 768px) {
+    overflow: visible;
+    height: auto;
+    min-height: auto;
+  }
 }
 
 .selector-header {
@@ -193,6 +199,9 @@ svg {
   padding-bottom: 12px;
   flex-shrink: 0;
   background: rgb(0, 0, 0);
+  position: sticky;
+  top: 0;
+  z-index: 20;
 
   @media (max-width: 600px) {
     flex-wrap: wrap;
@@ -278,6 +287,10 @@ svg {
   overflow-y: auto;
   padding-bottom: 80px;
   min-height: 0;
+
+  @media (max-width: 768px) {
+    overflow-y: visible;
+  }
 }
 
 .selector-items {
@@ -613,6 +626,12 @@ svg {
   height: 100vh;
   max-height: 100vh;
   overflow: hidden;
+
+  @media (max-width: 768px) {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
 }
 
 /* Recipe Search */
