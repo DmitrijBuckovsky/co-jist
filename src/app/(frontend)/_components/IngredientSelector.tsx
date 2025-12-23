@@ -118,10 +118,7 @@ export function IngredientSelector({ selectedDifficulties = [], maxPrepTime = nu
   };
 
   const findRecipes = async () => {
-    if (selected.size === 0) {
-      setError('Vyberte alespoň jednu ingredienci');
-      return;
-    }
+    if (selected.size === 0) return;
 
     setSearching(true);
     setError(null);
@@ -236,7 +233,7 @@ export function IngredientSelector({ selectedDifficulties = [], maxPrepTime = nu
       </div>
 
       <div className="selector-footer">
-        <button onClick={findRecipes} disabled={selected.size === 0 || searching} className="selector-submit">
+        <button onClick={findRecipes} disabled={searching || selected.size === 0} className="selector-submit">
           {searching ? 'Hledám...' : `Najít recepty (${selected.size})`}
         </button>
       </div>

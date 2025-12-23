@@ -1,12 +1,16 @@
 'use client';
+import { AllRecipes } from './_components/AllRecipes';
 import { IngredientSelector } from './_components/IngredientSelector';
 import { RecipeSearch } from './_components/RecipeSearch';
 import { Difficulty, DIFFICULTY_LABELS } from './_utils/difficulty';
 import React, { useEffect, useState } from 'react';
 
+type View = 'all' | 'search' | 'match';
+
 export default function HomePage() {
   const [selectedDifficulties, setSelectedDifficulties] = useState<Set<Difficulty>>(new Set());
   const [maxPrepTime, setMaxPrepTime] = useState<number | null>(null);
+  const [view, setView] = useState<View>('match');
 
   useEffect(() => {
     const saved = localStorage.getItem('selectedDifficulties');
@@ -47,6 +51,18 @@ export default function HomePage() {
 
   return (
     <div className="main-page">
+      <div className="view-switcher">
+        <button className={`view-btn ${view === 'match' ? 'active' : ''}`} onClick={() => setView('match')}>
+          Ingredience
+        </button>
+        <button className={`view-btn ${view === 'search' ? 'active' : ''}`} onClick={() => setView('search')}>
+          Hledat
+        </button>
+        <button className={`view-btn ${view === 'all' ? 'active' : ''}`} onClick={() => setView('all')}>
+          Všechny
+        </button>
+      </div>
+
       <div className="difficulty-filter">
         <div className="filter-section">
           <span className="difficulty-label">Obtížnost:</span>
@@ -77,8 +93,18 @@ export default function HomePage() {
           </div>
         </div>
       </div>
-      <RecipeSearch selectedDifficulties={Array.from(selectedDifficulties)} maxPrepTime={maxPrepTime} />
-      <IngredientSelector selectedDifficulties={Array.from(selectedDifficulties)} maxPrepTime={maxPrepTime} />
+
+      <div className="view-content">
+        {view === 'match' && (
+          <IngredientSelector selectedDifficulties={Array.from(selectedDifficulties)} maxPrepTime={maxPrepTime} />
+        )}
+        {view === 'search' && (
+          <RecipeSearch selectedDifficulties={Array.from(selectedDifficulties)} maxPrepTime={maxPrepTime} />
+        )}
+        {view === 'all' && (
+          <AllRecipes selectedDifficulties={Array.from(selectedDifficulties)} maxPrepTime={maxPrepTime} />
+        )}
+      </div>
     </div>
   );
 }
