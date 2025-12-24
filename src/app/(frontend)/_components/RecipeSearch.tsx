@@ -1,7 +1,7 @@
 'use client';
 import { getDifficultyLabel } from '../_utils/difficulty';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface RecipeSearchResult {
   id: number;
@@ -22,7 +22,7 @@ export function RecipeSearch({ selectedDifficulties = [], maxPrepTime = null }: 
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  const handleSearch = async () => {
+  const handleSearch = useCallback(async () => {
     if (query.trim().length < 2) return;
 
     setSearching(true);
@@ -55,7 +55,20 @@ export function RecipeSearch({ selectedDifficulties = [], maxPrepTime = null }: 
     } finally {
       setSearching(false);
     }
-  };
+  }, [query, selectedDifficulties, maxPrepTime]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (query.trim().length >= 2) {
+        handleSearch();
+      } else if (query.trim().length === 0) {
+        setResults([]);
+        setSearched(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [query, handleSearch]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {

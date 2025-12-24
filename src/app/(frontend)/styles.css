@@ -651,7 +651,7 @@ svg {
     .amount {
       color: rgb(100, 180, 255);
       font-weight: 500;
-      min-width: 50px;
+      min-width: 80px;
     }
 
     .name {

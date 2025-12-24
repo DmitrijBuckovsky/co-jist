@@ -33,9 +33,10 @@ interface RecipeResultsData {
   recipes: RecipeMatch[];
 }
 
-type SortOption = 'name' | 'prepTime' | 'difficulty';
+type SortOption = 'name' | 'prepTime' | 'difficulty' | 'score';
 
 const SORT_OPTIONS: Record<SortOption, string> = {
+  score: 'Shoda',
   name: 'Název',
   prepTime: 'Čas přípravy',
   difficulty: 'Obtížnost',
@@ -51,9 +52,14 @@ export function RecipeResults() {
   const router = useRouter();
   const [results, setResults] = useState<RecipeResultsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState<SortOption>('name');
+  const [sortBy, setSortBy] = useState<SortOption>('score');
 
   useEffect(() => {
+    const savedSort = localStorage.getItem('recipeSortBy');
+    if (savedSort) {
+      setSortBy(savedSort as SortOption);
+    }
+
     const savedResults = localStorage.getItem('recipeMatches');
 
     if (!savedResults) {
@@ -75,6 +81,8 @@ export function RecipeResults() {
 
     return [...results.recipes].sort((a, b) => {
       switch (sortBy) {
+        case 'score':
+          return b.score - a.score;
         case 'name':
           return a.name.localeCompare(b.name);
         case 'prepTime':
@@ -121,7 +129,11 @@ export function RecipeResults() {
           <select
             id="sort-select"
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortOption)}
+            onChange={(e) => {
+              const val = e.target.value as SortOption;
+              setSortBy(val);
+              localStorage.setItem('recipeSortBy', val);
+            }}
             className="sort-select"
           >
             {Object.entries(SORT_OPTIONS).map(([value, label]) => (
