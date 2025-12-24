@@ -1,8 +1,8 @@
 'use client';
-import { getDifficultyLabel } from '../_utils/difficulty';
 import { useWordAutocomplete } from '../_hooks/useWordAutocomplete';
+import { getDifficultyLabel } from '../_utils/difficulty';
 import Link from 'next/link';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface RecipeSearchResult {
   id: number;

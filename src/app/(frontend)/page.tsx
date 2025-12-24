@@ -1,8 +1,8 @@
 'use client';
 import { AllRecipes } from './_components/AllRecipes';
 import { IngredientSelector } from './_components/IngredientSelector';
-import { RecipeSearch } from './_components/RecipeSearch';
 import { RandomRecipes } from './_components/RandomRecipes';
+import { RecipeSearch } from './_components/RecipeSearch';
 import { Difficulty, DIFFICULTY_LABELS } from './_utils/difficulty';
 import React, { useEffect, useState } from 'react';
 

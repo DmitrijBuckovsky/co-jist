@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { Recipe } from '@/payload-types';
 import { DIFFICULTY_LABELS } from '../_utils/difficulty';
+import { Recipe } from '@/payload-types';
+import Link from 'next/link';
+import React, { useEffect, useState } from 'react';
 
 export function RandomRecipes() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);

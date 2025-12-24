@@ -1,12 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  AutocompleteWord,
-  findWhisperSuggestion,
-  getCompletionText,
-  applySuggestion,
-} from '../_utils/autocomplete';
+import { applySuggestion, AutocompleteWord, findWhisperSuggestion, getCompletionText } from '../_utils/autocomplete';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface UseWordAutocompleteResult {
   getSuggestion: (input: string) => string | null;
@@ -36,20 +31,11 @@ export function useWordAutocomplete(): UseWordAutocompleteResult {
       .finally(() => setLoading(false));
   }, []);
 
-  const getSuggestion = useCallback(
-    (input: string) => findWhisperSuggestion(input, words),
-    [words],
-  );
+  const getSuggestion = useCallback((input: string) => findWhisperSuggestion(input, words), [words]);
 
-  const getCompletion = useCallback(
-    (input: string, suggestion: string) => getCompletionText(input, suggestion),
-    [],
-  );
+  const getCompletion = useCallback((input: string, suggestion: string) => getCompletionText(input, suggestion), []);
 
-  const applyCompletion = useCallback(
-    (input: string, suggestion: string) => applySuggestion(input, suggestion),
-    [],
-  );
+  const applyCompletion = useCallback((input: string, suggestion: string) => applySuggestion(input, suggestion), []);
 
   return {
     getSuggestion,
