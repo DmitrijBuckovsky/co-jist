@@ -2,18 +2,8 @@ import { SIMILARITY } from '@/constants';
 
 import { withErrorHandling } from '@/core/exceptions';
 import { extractJsonBody } from '@/core/utils/json-body-extractor';
+import { normalizeText } from '@/core/utils/normalize-text';
 import type { PayloadRequest } from 'payload';
-
-/**
- * Normalizes text by removing diacritics and converting to lowercase
- */
-function normalizeText(text: string): string {
-  return text
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
-}
 
 interface SearchRecipesBody {
   query: string;

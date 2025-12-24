@@ -1,7 +1,8 @@
 'use client';
 import { getDifficultyLabel } from '../_utils/difficulty';
+import { useWordAutocomplete } from '../_hooks/useWordAutocomplete';
 import Link from 'next/link';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface RecipeSearchResult {
   id: number;
@@ -21,6 +22,9 @@ export function RecipeSearch({ selectedDifficulties = [], maxPrepTime = null }: 
   const [results, setResults] = useState<RecipeSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [whisperSuggestion, setWhisperSuggestion] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const { getSuggestion, getCompletion, applyCompletion, ready } = useWordAutocomplete();
 
   const handleSearch = useCallback(async () => {
     if (query.trim().length < 2) return;
@@ -70,9 +74,31 @@ export function RecipeSearch({ selectedDifficulties = [], maxPrepTime = null }: 
     return () => clearTimeout(timer);
   }, [query, handleSearch]);
 
+  // Update whisper suggestion when query changes
+  useEffect(() => {
+    if (ready && query.length >= 1) {
+      const suggestion = getSuggestion(query);
+      setWhisperSuggestion(suggestion);
+    } else {
+      setWhisperSuggestion(null);
+    }
+  }, [query, getSuggestion, ready]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Tab' && whisperSuggestion) {
+      e.preventDefault();
+      setQuery(applyCompletion(query, whisperSuggestion));
+      setWhisperSuggestion(null);
+    } else if (e.key === 'Enter') {
       handleSearch();
+    }
+  };
+
+  const acceptSuggestion = () => {
+    if (whisperSuggestion) {
+      setQuery(applyCompletion(query, whisperSuggestion));
+      setWhisperSuggestion(null);
+      inputRef.current?.focus();
     }
   };
 
@@ -88,14 +114,33 @@ export function RecipeSearch({ selectedDifficulties = [], maxPrepTime = null }: 
       <h2>Hledat recepty</h2>
 
       <div className="recipe-search-input">
-        <div className="input-wrapper">
+        <div className="input-wrapper whisper-container">
+          {whisperSuggestion && (
+            <div className="whisper-ghost">
+              <span className="whisper-typed">{query}</span>
+              <span className="whisper-completion">{getCompletion(query, whisperSuggestion)}</span>
+            </div>
+          )}
           <input
+            ref={inputRef}
             type="text"
+            className="whisper-input"
             placeholder="Zadejte název receptu..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
           />
+          {whisperSuggestion && (
+            <button
+              type="button"
+              className="whisper-accept-btn"
+              onClick={acceptSuggestion}
+              aria-label="Doplnit"
+              title="TAB"
+            >
+              ↵
+            </button>
+          )}
           <button type="button" className="clear-button" onClick={handleClear} aria-label="Clear search">
             ×
           </button>
