@@ -38,9 +38,7 @@ interface RecipeIngredientRow {
  */
 export const zeroWasteHandler = withErrorHandling(async (req: PayloadRequest) => {
   const url = new URL(req.url || '', 'http://localhost');
-  const seedRecipeId = url.searchParams.get('recipeId')
-    ? parseInt(url.searchParams.get('recipeId')!, 10)
-    : null;
+  const seedRecipeId = url.searchParams.get('recipeId') ? parseInt(url.searchParams.get('recipeId')!, 10) : null;
   const mode = url.searchParams.get('mode') === 'diverse' ? 'diverse' : 'overlap';
   // Fetch all recipes with their ingredients
   const query = `

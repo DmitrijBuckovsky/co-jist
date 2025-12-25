@@ -3,7 +3,7 @@
 import { CalendarCheck, ChefHat, List, Search, Shuffle } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
 const NAV_ITEMS = [
   { view: 'match', label: 'Ingredience', icon: ChefHat },
@@ -15,7 +15,7 @@ const NAV_ITEMS = [
 
 type View = (typeof NAV_ITEMS)[number]['view'];
 
-export function BottomNav() {
+function BottomNavContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [activeView, setActiveView] = useState<View | null>(null);
@@ -35,22 +35,28 @@ export function BottomNav() {
   }, [pathname, searchParams]);
 
   return (
-    <nav className="bottom-nav">
+    <>
       {NAV_ITEMS.map((item) => {
         const Icon = item.icon;
         const isActive = activeView === item.view;
 
         return (
-          <Link
-            key={item.view}
-            href={`/?view=${item.view}`}
-            className={`bottom-nav-item ${isActive ? 'active' : ''}`}
-          >
+          <Link key={item.view} href={`/?view=${item.view}`} className={`bottom-nav-item ${isActive ? 'active' : ''}`}>
             <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
             <span>{item.label}</span>
           </Link>
         );
       })}
+    </>
+  );
+}
+
+export function BottomNav() {
+  return (
+    <nav className="bottom-nav">
+      <Suspense fallback={null}>
+        <BottomNavContent />
+      </Suspense>
     </nav>
   );
 }

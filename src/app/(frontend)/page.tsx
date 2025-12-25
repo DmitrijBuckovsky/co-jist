@@ -6,13 +6,13 @@ import { RecipeSearch } from './_components/RecipeSearch';
 import { ZeroWaste } from './_components/ZeroWaste';
 import { Difficulty, DIFFICULTY_LABELS } from './_utils/difficulty';
 import { useSearchParams } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 
 type View = 'all' | 'search' | 'match' | 'random' | 'zerowaste';
 
 const VALID_VIEWS: View[] = ['all', 'search', 'match', 'random', 'zerowaste'];
 
-export default function HomePage() {
+function HomePageContent() {
   const searchParams = useSearchParams();
   const [selectedDifficulties, setSelectedDifficulties] = useState<Set<Difficulty>>(new Set());
   const [maxPrepTime, setMaxPrepTime] = useState<number | null>(null);
@@ -111,5 +111,13 @@ export default function HomePage() {
         {view === 'zerowaste' && <ZeroWaste seedRecipeId={seedRecipeId} />}
       </div>
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<div className="page-loading">Načítám...</div>}>
+      <HomePageContent />
+    </Suspense>
   );
 }
