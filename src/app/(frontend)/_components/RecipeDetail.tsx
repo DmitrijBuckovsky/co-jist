@@ -1,6 +1,7 @@
 'use client';
 import { getDifficultyLabel } from '../_utils/difficulty';
 import { PageHeader } from './PageHeader';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 interface RecipeIngredient {
@@ -92,6 +93,12 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
   return (
     <div className="page-container">
       <PageHeader title={recipe.name} />
+
+      <div className="detail-actions">
+        <Link href={`/?view=zerowaste&recipeId=${recipe.id}`} className="plan-link">
+          Plán
+        </Link>
+      </div>
 
       {(recipe.difficulty || recipe.prep_time_mins || recipe.servings) && (
         <div className="detail-meta">

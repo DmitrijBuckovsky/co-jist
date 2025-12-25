@@ -3,6 +3,7 @@ import { listRecipesHandler } from './list-recipes.handler';
 import { matchRecipesHandler } from './match-recipes.handler';
 import { randomRecipesHandler } from './random-recipes.handler';
 import { searchRecipesHandler } from './search-recipes.handler';
+import { zeroWasteHandler } from './zero-waste.handler';
 import { Endpoint } from 'payload';
 
 export const autocompleteWords: Endpoint = {
@@ -33,4 +34,10 @@ export const randomRecipes: Endpoint = {
   method: 'get',
   handler: randomRecipesHandler,
   path: '/random-recipes',
+};
+
+export const zeroWaste: Endpoint = {
+  method: 'get',
+  handler: zeroWasteHandler,
+  path: '/zero-waste',
 };

@@ -1146,7 +1146,7 @@ export async function seedData(payload: Payload): Promise<void> {
       ],
     },
     {
-      name: 'Vídeňský Řízek',
+      name: 'Vídeňský řízek',
       difficulty: 'medium' as const,
       instructions: `1. Telecí maso naklepejte na tenké plátky.
 2. Osolte a opepřete.
@@ -1156,9 +1156,9 @@ export async function seedData(payload: Payload): Promise<void> {
       prep_time_mins: 40,
       ingredients: [
         { name: 'Telecí maso', amount: '400g', is_main: true },
-        { name: 'Strouhanka', amount: '100g', is_main: false },
-        { name: 'Mouka', amount: '50g', is_main: false },
-        { name: 'Vejce', amount: '2 ks', is_main: false },
+        { name: 'Strouhanka', amount: '100g', is_main: true },
+        { name: 'Mouka', amount: '50g', is_main: true },
+        { name: 'Vejce', amount: '2 ks', is_main: true },
         { name: 'Sádlo', amount: 'na smažení', is_main: false },
         { name: 'Citrón', amount: '1 ks', is_main: false },
       ],

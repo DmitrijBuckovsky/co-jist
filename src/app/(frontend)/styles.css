@@ -577,6 +577,27 @@ svg {
 }
 
 /* Recipe Detail */
+.detail-actions {
+  margin-bottom: 16px;
+}
+
+.plan-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: rgba(0, 123, 255, 0.15);
+  color: rgb(100, 180, 255);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.2s;
+
+  &:hover {
+    background: rgba(0, 123, 255, 0.25);
+  }
+}
+
 .detail-meta {
   display: flex;
   gap: 16px;
@@ -1065,4 +1086,134 @@ svg {
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
+}
+
+/* Zero Waste / Plán */
+.zero-waste {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+  max-width: 1000px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.zero-waste-header {
+  margin-bottom: 16px;
+
+  h2 {
+    margin: 0;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgb(120, 120, 120);
+    font-weight: 600;
+  }
+}
+
+.zero-waste-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.zero-waste-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: rgb(160, 160, 160);
+
+  .separator {
+    color: rgb(80, 80, 80);
+  }
+
+  .shared {
+    color: rgb(100, 180, 255);
+  }
+}
+
+.zero-waste-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 80px;
+}
+
+.zero-waste-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  .skeleton {
+    background: rgb(30, 30, 30);
+    border-radius: 6px;
+    animation: pulse 1.5s infinite;
+  }
+}
+
+.zero-waste-recipes {
+  margin-bottom: 24px;
+
+  h3 {
+    margin: 0 0 12px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgb(100, 100, 100);
+    font-weight: 600;
+  }
+}
+
+.zero-waste-shopping {
+  h3 {
+    margin: 0 0 12px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgb(100, 100, 100);
+    font-weight: 600;
+  }
+}
+
+.shopping-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    background: rgb(30, 30, 30);
+    border-radius: 6px;
+    font-size: 13px;
+    color: rgb(180, 180, 180);
+
+    &.shared {
+      background: rgba(0, 123, 255, 0.15);
+      color: rgb(150, 200, 255);
+    }
+  }
+
+  .shopping-item-count {
+    font-size: 11px;
+    color: rgb(100, 180, 255);
+    font-weight: 600;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }

@@ -3,15 +3,19 @@ import { AllRecipes } from './_components/AllRecipes';
 import { IngredientSelector } from './_components/IngredientSelector';
 import { RandomRecipes } from './_components/RandomRecipes';
 import { RecipeSearch } from './_components/RecipeSearch';
+import { ZeroWaste } from './_components/ZeroWaste';
 import { Difficulty, DIFFICULTY_LABELS } from './_utils/difficulty';
+import { useSearchParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 
-type View = 'all' | 'search' | 'match' | 'random';
+type View = 'all' | 'search' | 'match' | 'random' | 'zerowaste';
 
 export default function HomePage() {
+  const searchParams = useSearchParams();
   const [selectedDifficulties, setSelectedDifficulties] = useState<Set<Difficulty>>(new Set());
   const [maxPrepTime, setMaxPrepTime] = useState<number | null>(null);
-  const [view, setView] = useState<View>('match');
+  const [view, setView] = useState<View>('random');
+  const [seedRecipeId, setSeedRecipeId] = useState<number | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('selectedDifficulties');
@@ -26,7 +30,17 @@ export default function HomePage() {
         setMaxPrepTime(JSON.parse(savedTime));
       } catch {}
     }
-  }, []);
+
+    // Check URL params for view and recipeId
+    const urlView = searchParams.get('view');
+    const urlRecipeId = searchParams.get('recipeId');
+    if (urlView === 'zerowaste') {
+      setView('zerowaste');
+      if (urlRecipeId) {
+        setSeedRecipeId(parseInt(urlRecipeId, 10));
+      }
+    }
+  }, [searchParams]);
 
   const toggleDifficulty = (diff: Difficulty) => {
     setSelectedDifficulties((prev) => {
@@ -65,9 +79,18 @@ export default function HomePage() {
         <button className={`view-btn ${view === 'random' ? 'active' : ''}`} onClick={() => setView('random')}>
           Náhodné
         </button>
+        <button
+          className={`view-btn ${view === 'zerowaste' ? 'active' : ''}`}
+          onClick={() => {
+            setView('zerowaste');
+            setSeedRecipeId(null);
+          }}
+        >
+          Plán
+        </button>
       </div>
 
-      {view !== 'random' && (
+      {view !== 'random' && view !== 'zerowaste' && (
         <div className="difficulty-filter">
           <div className="filter-section">
             <span className="difficulty-label">Obtížnost:</span>
@@ -111,6 +134,7 @@ export default function HomePage() {
           <AllRecipes selectedDifficulties={Array.from(selectedDifficulties)} maxPrepTime={maxPrepTime} />
         )}
         {view === 'random' && <RandomRecipes />}
+        {view === 'zerowaste' && <ZeroWaste seedRecipeId={seedRecipeId} />}
       </div>
     </div>
   );

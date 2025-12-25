@@ -1,4 +1,4 @@
-import { autocompleteWords, listRecipes, matchRecipes, randomRecipes, searchRecipes } from './endpoints';
+import { autocompleteWords, listRecipes, matchRecipes, randomRecipes, searchRecipes, zeroWaste } from './endpoints';
 import { generateNameSearchHook, syncIngredientsHook } from './hooks';
 import { anyone, isAdmin } from '@/core/access';
 import type { CollectionConfig } from 'payload';
@@ -16,7 +16,7 @@ export const Recipes: CollectionConfig = {
     defaultColumns: ['id', 'name', 'prep_time_mins'],
     group: 'Recipe Management',
   },
-  endpoints: [autocompleteWords, matchRecipes, searchRecipes, listRecipes, randomRecipes],
+  endpoints: [autocompleteWords, matchRecipes, searchRecipes, listRecipes, randomRecipes, zeroWaste],
   hooks: {
     beforeChange: [generateNameSearchHook],
     afterChange: [syncIngredientsHook],
