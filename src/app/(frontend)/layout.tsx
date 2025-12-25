@@ -1,5 +1,6 @@
+import { BottomNav } from './_components/BottomNav';
 import './styles.css';
-import React from 'react';
+import React, { Suspense } from 'react';
 
 export const metadata = {
   description: 'Najděte recepty podle ingrediencí, které máte doma.',
@@ -19,6 +20,9 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
     <html lang="en">
       <body>
         <main>{children}</main>
+        <Suspense fallback={null}>
+          <BottomNav />
+        </Suspense>
       </body>
     </html>
   );

@@ -10,12 +10,20 @@ import React, { useEffect, useState } from 'react';
 
 type View = 'all' | 'search' | 'match' | 'random' | 'zerowaste';
 
+const VALID_VIEWS: View[] = ['all', 'search', 'match', 'random', 'zerowaste'];
+
 export default function HomePage() {
   const searchParams = useSearchParams();
   const [selectedDifficulties, setSelectedDifficulties] = useState<Set<Difficulty>>(new Set());
   const [maxPrepTime, setMaxPrepTime] = useState<number | null>(null);
-  const [view, setView] = useState<View>('random');
-  const [seedRecipeId, setSeedRecipeId] = useState<number | null>(null);
+
+  // Get view from URL params, default to 'random'
+  const urlView = searchParams.get('view') as View | null;
+  const view: View = urlView && VALID_VIEWS.includes(urlView) ? urlView : 'random';
+
+  // Get seedRecipeId from URL params (for zerowaste) - computed directly, no state needed
+  const urlRecipeId = searchParams.get('recipeId');
+  const seedRecipeId = urlRecipeId ? parseInt(urlRecipeId, 10) : null;
 
   useEffect(() => {
     const saved = localStorage.getItem('selectedDifficulties');
@@ -30,17 +38,7 @@ export default function HomePage() {
         setMaxPrepTime(JSON.parse(savedTime));
       } catch {}
     }
-
-    // Check URL params for view and recipeId
-    const urlView = searchParams.get('view');
-    const urlRecipeId = searchParams.get('recipeId');
-    if (urlView === 'zerowaste') {
-      setView('zerowaste');
-      if (urlRecipeId) {
-        setSeedRecipeId(parseInt(urlRecipeId, 10));
-      }
-    }
-  }, [searchParams]);
+  }, []);
 
   const toggleDifficulty = (diff: Difficulty) => {
     setSelectedDifficulties((prev) => {
@@ -66,30 +64,6 @@ export default function HomePage() {
 
   return (
     <div className="main-page">
-      <div className="view-switcher">
-        <button className={`view-btn ${view === 'match' ? 'active' : ''}`} onClick={() => setView('match')}>
-          Ingredience
-        </button>
-        <button className={`view-btn ${view === 'search' ? 'active' : ''}`} onClick={() => setView('search')}>
-          Hledat
-        </button>
-        <button className={`view-btn ${view === 'all' ? 'active' : ''}`} onClick={() => setView('all')}>
-          Všechny
-        </button>
-        <button className={`view-btn ${view === 'random' ? 'active' : ''}`} onClick={() => setView('random')}>
-          Náhodné
-        </button>
-        <button
-          className={`view-btn ${view === 'zerowaste' ? 'active' : ''}`}
-          onClick={() => {
-            setView('zerowaste');
-            setSeedRecipeId(null);
-          }}
-        >
-          Plán
-        </button>
-      </div>
-
       {view !== 'random' && view !== 'zerowaste' && (
         <div className="difficulty-filter">
           <div className="filter-section">

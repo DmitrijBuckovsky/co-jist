@@ -79,21 +79,24 @@ export function ZeroWaste({ seedRecipeId }: ZeroWasteProps) {
       <div className="zero-waste-header">
         <div className="zero-waste-controls">
           <h2>Plán</h2>
-          <div className="selector-view-toggle">
-            <button
-              className={`selector-view-btn ${mode === 'overlap' ? 'active' : ''}`}
-              onClick={() => setMode('overlap')}
-              disabled={loading}
-            >
-              Sdílené
-            </button>
-            <button
-              className={`selector-view-btn ${mode === 'diverse' ? 'active' : ''}`}
-              onClick={() => setMode('diverse')}
-              disabled={loading}
-            >
-              Různé
-            </button>
+          <div className="zero-waste-toggle-group">
+            <label className="zero-waste-toggle-label">Ingredience:</label>
+            <div className="selector-view-toggle">
+              <button
+                className={`selector-view-btn ${mode === 'overlap' ? 'active' : ''}`}
+                onClick={() => setMode('overlap')}
+                disabled={loading}
+              >
+                Sdílené
+              </button>
+              <button
+                className={`selector-view-btn ${mode === 'diverse' ? 'active' : ''}`}
+                onClick={() => setMode('diverse')}
+                disabled={loading}
+              >
+                Různé
+              </button>
+            </div>
           </div>
         </div>
         {data && (
@@ -147,9 +150,7 @@ export function ZeroWaste({ seedRecipeId }: ZeroWasteProps) {
                 {data.shoppingList.map((item) => (
                   <li key={item.id} className={item.usedIn.length > 1 ? 'shared' : ''}>
                     <span className="shopping-item-name">{item.name}</span>
-                    {item.usedIn.length > 1 && (
-                      <span className="shopping-item-count">({item.usedIn.length}×)</span>
-                    )}
+                    {item.usedIn.length > 1 && <span className="shopping-item-count">({item.usedIn.length}×)</span>}
                   </li>
                 ))}
               </ul>
