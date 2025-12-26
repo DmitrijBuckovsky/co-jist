@@ -1,6 +1,8 @@
 'use client';
 import { getDifficultyLabel } from '../_utils/difficulty';
+import { GoogleIcon } from './GoogleIcon';
 import { PageHeader } from './PageHeader';
+import { CalendarCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -90,15 +92,22 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
   const main = ingredients.filter((ri) => ri.is_main);
   const extra = ingredients.filter((ri) => !ri.is_main);
 
+  const handleGoogleSearch = () => {
+    const searchQuery = `Recept: "${recipe.name}"`;
+    const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+    window.open(googleUrl, '_blank');
+  };
+
   return (
     <div className="page-container">
-      <PageHeader title={recipe.name} />
-
-      <div className="detail-actions">
-        <Link href={`/?view=zerowaste&recipeId=${recipe.id}`} className="plan-link">
-          Plán
+      <PageHeader title={recipe.name}>
+        <Link href={`/?view=zerowaste&recipeId=${recipe.id}`} className="google-search-btn" title="Plán">
+          <CalendarCheck size={20} />
         </Link>
-      </div>
+        <button onClick={handleGoogleSearch} className="google-search-btn" title="Hledat na Google">
+          <GoogleIcon size={20} />
+        </button>
+      </PageHeader>
 
       {(recipe.difficulty || recipe.prep_time_mins || recipe.servings) && (
         <div className="detail-meta">
