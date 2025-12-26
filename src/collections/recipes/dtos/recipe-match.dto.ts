@@ -50,6 +50,7 @@ export interface RecipeMatchDB {
   missing_secondary: string;
   missing_total: string;
   score: string;
+  total_count?: string;
 }
 
 export interface RecipeIngredientDB {

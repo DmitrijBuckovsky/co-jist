@@ -58,7 +58,12 @@ class RecipeMatch {
 
 export const listRecipesHandler = withErrorHandling(async (req: PayloadRequest) => {
   const body = await extractJsonBody(req);
-  const { difficulty, maxPrepTime }: { difficulty?: string[]; maxPrepTime?: number } = body;
+  const {
+    difficulty,
+    maxPrepTime,
+    limit = 20,
+    offset = 0,
+  }: { difficulty?: string[]; maxPrepTime?: number; limit?: number; offset?: number } = body;
 
   // Validate difficulty values
   const validDifficulties = ['easy', 'medium', 'hard'];
@@ -66,6 +71,10 @@ export const listRecipesHandler = withErrorHandling(async (req: PayloadRequest) 
 
   // Validate maxPrepTime
   const validMaxPrepTime = typeof maxPrepTime === 'number' && maxPrepTime > 0 ? maxPrepTime : null;
+
+  // Validate pagination
+  const validLimit = typeof limit === 'number' && limit > 0 ? Math.min(limit, 100) : 20;
+  const validOffset = typeof offset === 'number' && offset >= 0 ? offset : 0;
 
   // Build filter clauses
   const filters: string[] = [];
@@ -83,7 +92,20 @@ export const listRecipesHandler = withErrorHandling(async (req: PayloadRequest) 
 
   const whereClause = filters.length > 0 ? `WHERE ${filters.join(' AND ')}` : '';
 
-  // Get all recipes with their ingredients
+  // Get total count
+  const countQuery = `
+    SELECT COUNT(DISTINCT r.id) as total
+    FROM recipes r
+    JOIN recipe_ingredients ri ON r.id = ri.recipe_id
+    ${whereClause};
+  `;
+  const { rows: countRows } = await req.payload.db.pool.query<{ total: string }>(countQuery, params);
+  const totalCount = parseInt(countRows[0]?.total || '0', 10);
+
+  // Get paginated recipes with their ingredients
+  params.push(validLimit);
+  params.push(validOffset);
+
   const query = `
     SELECT
       r.id,
@@ -102,7 +124,8 @@ export const listRecipesHandler = withErrorHandling(async (req: PayloadRequest) 
     JOIN recipe_ingredients ri ON r.id = ri.recipe_id
     ${whereClause}
     GROUP BY r.id, r.name, r.difficulty, r.prep_time_mins
-    ORDER BY r.name ASC;
+    ORDER BY r.name ASC
+    LIMIT $${params.length - 1} OFFSET $${params.length};
   `;
 
   const { rows } = await req.payload.db.pool.query<RecipeMatchDB>(query, params);
@@ -111,8 +134,9 @@ export const listRecipesHandler = withErrorHandling(async (req: PayloadRequest) 
     return Response.json({
       success: true,
       data: {
-        totalMatches: 0,
+        totalMatches: totalCount,
         recipes: [],
+        hasMore: false,
       },
     });
   }
@@ -150,8 +174,9 @@ export const listRecipesHandler = withErrorHandling(async (req: PayloadRequest) 
   return Response.json({
     success: true,
     data: {
-      totalMatches: rows.length,
+      totalMatches: totalCount,
       recipes: rows.map((row) => new RecipeMatch(row, ingredientsByRecipe.get(row.id) || [])),
+      hasMore: validOffset + rows.length < totalCount,
     },
   });
 });

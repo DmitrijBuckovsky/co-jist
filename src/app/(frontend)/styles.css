@@ -1,5 +1,7 @@
 :root {
   --font-mono: 'Roboto Mono', monospace;
+  --footer-height: 64px;
+  --footer-button-section-height: 70px;
 }
 
 * {
@@ -60,12 +62,12 @@ h1 {
 
   @media (max-width: 768px) {
     font-size: 32px;
-    line-height: 36px;
+    line-height: 24px;
   }
 
   @media (max-width: 400px) {
     font-size: 28px;
-    line-height: 32px;
+    line-height: 20px;
   }
 }
 
@@ -291,7 +293,7 @@ svg {
 .selector-list {
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 80px;
+  padding-bottom: calc(var(--footer-height) + var(--footer-button-section-height) + 10px);
   min-height: 0;
 
   @media (max-width: 768px) {
@@ -351,9 +353,10 @@ svg {
 
 .selector-footer {
   position: fixed;
-  bottom: 64px;
+  bottom: var(--footer-height);
   left: 0;
   right: 0;
+  height: var(--footer-button-section-height);
   padding: 16px;
   background: linear-gradient(to top, rgb(0, 0, 0) 80%, transparent);
   display: flex;
@@ -909,7 +912,7 @@ svg {
 
   .whisper-accept-btn {
     position: absolute;
-    right: 32px;
+    right: 40px;
     top: 50%;
     transform: translateY(-50%);
     background: rgba(0, 123, 255, 0.2);
@@ -960,6 +963,18 @@ svg {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.load-more-trigger {
+  padding: 20px 16px;
+  display: flex;
+  justify-content: center;
+  min-height: 60px;
+}
+
+.loading-more {
+  color: rgb(100, 100, 100);
+  font-size: 13px;
 }
 
 .recipe-search-item {
@@ -1199,7 +1214,7 @@ svg {
 .zero-waste-content {
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 80px;
+  padding-bottom: calc(var(--footer-height) + var(--footer-button-section-height) + 10px);
 }
 
 .zero-waste-loading {
@@ -1276,4 +1291,8 @@ svg {
   50% {
     opacity: 0.5;
   }
+}
+
+.empty, .loading {
+  padding: 16px;
 }

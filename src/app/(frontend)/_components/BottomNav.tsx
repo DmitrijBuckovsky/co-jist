@@ -6,10 +6,10 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
 const NAV_ITEMS = [
+  { view: 'random', label: 'Náhodné', icon: Shuffle },
   { view: 'match', label: 'Ingredience', icon: ChefHat },
   { view: 'search', label: 'Hledat', icon: Search },
   { view: 'all', label: 'Všechny', icon: List },
-  { view: 'random', label: 'Náhodné', icon: Shuffle },
   { view: 'zerowaste', label: 'Plán', icon: CalendarCheck },
 ] as const;
 

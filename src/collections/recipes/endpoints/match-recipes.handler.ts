@@ -10,7 +10,9 @@ export const matchRecipesHandler = withErrorHandling(async (req: PayloadRequest)
     ingredientIds,
     difficulty,
     maxPrepTime,
-  }: { ingredientIds?: number[]; difficulty?: string[]; maxPrepTime?: number } = body;
+    limit = 20,
+    offset = 0,
+  }: { ingredientIds?: number[]; difficulty?: string[]; maxPrepTime?: number; limit?: number; offset?: number } = body;
   const sanitizedIds = Array.isArray(ingredientIds)
     ? ingredientIds.map(Number).filter((id) => Number.isInteger(id))
     : [];
@@ -25,6 +27,10 @@ export const matchRecipesHandler = withErrorHandling(async (req: PayloadRequest)
 
   // Validate maxPrepTime
   const validMaxPrepTime = typeof maxPrepTime === 'number' && maxPrepTime > 0 ? maxPrepTime : null;
+
+  // Validate pagination
+  const validLimit = typeof limit === 'number' && limit > 0 ? Math.min(limit, 100) : 20;
+  const validOffset = typeof offset === 'number' && offset >= 0 ? offset : 0;
 
   // Build filter clauses
   const filters: string[] = [];
@@ -77,11 +83,15 @@ export const matchRecipesHandler = withErrorHandling(async (req: PayloadRequest)
       missing_main,
       missing_secondary,
       missing_total,
-      (secondary_have - missing_total) AS score
+      (secondary_have - missing_total) AS score,
+      COUNT(*) OVER() AS total_count
     FROM recipe_analysis
     WHERE main_have = main_total AND main_total > 0
-    ORDER BY score DESC;
+    ORDER BY score DESC
+    LIMIT $${params.length + 1} OFFSET $${params.length + 2};
   `;
+
+  params.push(validLimit, validOffset);
 
   const { rows } = await req.payload.db.pool.query<RecipeMatchDB>(query, params);
 
@@ -91,6 +101,7 @@ export const matchRecipesHandler = withErrorHandling(async (req: PayloadRequest)
       data: {
         totalMatches: 0,
         recipes: [],
+        hasMore: false,
       },
     });
   }
@@ -132,11 +143,14 @@ export const matchRecipesHandler = withErrorHandling(async (req: PayloadRequest)
     ingredientsByRecipe.set(row.recipe_id, existing);
   }
 
+  const totalCount = rows.length > 0 ? parseInt(rows[0].total_count || '0', 10) : 0;
+
   return Response.json({
     success: true,
     data: {
-      totalMatches: rows.length,
+      totalMatches: totalCount,
       recipes: rows.map((row) => new RecipeMatch(row, ingredientsByRecipe.get(row.id) || [])),
+      hasMore: validOffset + rows.length < totalCount,
     },
   });
 });

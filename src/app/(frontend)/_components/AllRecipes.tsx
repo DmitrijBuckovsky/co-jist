@@ -1,7 +1,7 @@
 'use client';
 import { Difficulty, getDifficultyLabel } from '../_utils/difficulty';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 interface Recipe {
   id: number;
@@ -24,6 +24,8 @@ const DIFFICULTY_ORDER = {
   [Difficulty.Hard]: 3,
 };
 
+const PAGE_SIZE = 20;
+
 interface AllRecipesProps {
   selectedDifficulties?: string[];
   maxPrepTime?: number | null;
@@ -32,13 +34,29 @@ interface AllRecipesProps {
 export function AllRecipes({ selectedDifficulties = [], maxPrepTime = null }: AllRecipesProps) {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('name');
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const isLoadingRef = useRef(false);
 
-  useEffect(() => {
-    const fetchRecipes = async () => {
-      setLoading(true);
+  const fetchRecipes = useCallback(
+    async (offset: number = 0, append: boolean = false) => {
+      // Use ref to prevent duplicate calls
+      if (append && isLoadingRef.current) return;
+
+      if (append) {
+        isLoadingRef.current = true;
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+
       try {
-        const requestBody: { difficulty?: string[]; maxPrepTime?: number } = {};
+        const requestBody: { difficulty?: string[]; maxPrepTime?: number; limit: number; offset: number } = {
+          limit: PAGE_SIZE,
+          offset,
+        };
         if (selectedDifficulties.length > 0) {
           requestBody.difficulty = selectedDifficulties;
         }
@@ -54,17 +72,54 @@ export function AllRecipes({ selectedDifficulties = [], maxPrepTime = null }: Al
 
         if (response.ok) {
           const data = await response.json();
-          setRecipes(data.data?.recipes || []);
+          const newRecipes = data.data?.recipes || [];
+          setHasMore(data.data?.hasMore || false);
+
+          if (append) {
+            setRecipes((prev) => [...prev, ...newRecipes]);
+          } else {
+            setRecipes(newRecipes);
+          }
         }
       } catch (error) {
         console.error('Failed to fetch recipes:', error);
       } finally {
         setLoading(false);
+        setLoadingMore(false);
+        isLoadingRef.current = false;
       }
-    };
+    },
+    [selectedDifficulties, maxPrepTime],
+  );
 
-    fetchRecipes();
-  }, [selectedDifficulties, maxPrepTime]);
+  useEffect(() => {
+    fetchRecipes(0, false);
+  }, [fetchRecipes]);
+
+  // Infinite scroll - use scroll event
+  const handleScroll = useCallback(() => {
+    if (!hasMore || isLoadingRef.current) return;
+
+    const trigger = loadMoreRef.current;
+    if (!trigger) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const isVisible = rect.top < window.innerHeight + 100;
+
+    if (isVisible) {
+      fetchRecipes(recipes.length, true);
+    }
+  }, [hasMore, recipes.length, fetchRecipes]);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    // Also check immediately in case content is short
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [handleScroll]);
 
   const sortedRecipes = useMemo(() => {
     if (!recipes) return [];
@@ -126,6 +181,10 @@ export function AllRecipes({ selectedDifficulties = [], maxPrepTime = null }: Al
             {recipe.prepTimeMins && <span className="recipe-search-time">{recipe.prepTimeMins} min</span>}
           </Link>
         ))}
+        <div ref={loadMoreRef} className="load-more-trigger">
+          {loadingMore && <div className="loading-more">Načítám další...</div>}
+          {!loadingMore && hasMore && <div className="loading-more">Posuňte pro načtení dalších</div>}
+        </div>
       </div>
     </div>
   );

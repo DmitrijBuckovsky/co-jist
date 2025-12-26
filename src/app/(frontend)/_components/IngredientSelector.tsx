@@ -143,6 +143,12 @@ export function IngredientSelector({ selectedDifficulties = [], maxPrepTime = nu
       if (!response.ok) throw new Error('Search failed');
 
       const result = await response.json();
+      // Store search params for pagination in results page
+      localStorage.setItem('recipeSearchParams', JSON.stringify({
+        ingredientIds: Array.from(selected),
+        difficulty: selectedDifficulties.length > 0 ? selectedDifficulties : undefined,
+        maxPrepTime: maxPrepTime ?? undefined,
+      }));
       localStorage.setItem('recipeMatches', JSON.stringify(result.data));
       localStorage.setItem('selectedIngredients', JSON.stringify(Array.from(selected)));
       router.push('/results');

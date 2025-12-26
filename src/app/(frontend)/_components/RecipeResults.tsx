@@ -3,7 +3,15 @@ import { Difficulty, getDifficultyLabel } from '../_utils/difficulty';
 import { PageHeader } from './PageHeader';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+interface SearchParams {
+  ingredientIds: number[];
+  difficulty?: string[];
+  maxPrepTime?: number;
+}
+
+const PAGE_SIZE = 20;
 
 interface RecipeIngredient {
   id: number;
@@ -50,9 +58,15 @@ const DIFFICULTY_ORDER = {
 
 export function RecipeResults() {
   const router = useRouter();
-  const [results, setResults] = useState<RecipeResultsData | null>(null);
+  const [recipes, setRecipes] = useState<RecipeMatch[]>([]);
+  const [totalMatches, setTotalMatches] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('score');
+  const [searchParams, setSearchParams] = useState<SearchParams | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const isLoadingRef = useRef(false);
 
   useEffect(() => {
     const savedSort = localStorage.getItem('recipeSortBy');
@@ -61,14 +75,20 @@ export function RecipeResults() {
     }
 
     const savedResults = localStorage.getItem('recipeMatches');
+    const savedParams = localStorage.getItem('recipeSearchParams');
 
-    if (!savedResults) {
+    if (!savedResults || !savedParams) {
       router.push('/');
       return;
     }
 
     try {
-      setResults(JSON.parse(savedResults));
+      const resultsData: RecipeResultsData = JSON.parse(savedResults);
+      const paramsData: SearchParams = JSON.parse(savedParams);
+      setRecipes(resultsData.recipes);
+      setTotalMatches(resultsData.totalMatches);
+      setHasMore((resultsData as RecipeResultsData & { hasMore?: boolean }).hasMore ?? resultsData.recipes.length < resultsData.totalMatches);
+      setSearchParams(paramsData);
     } catch {
       router.push('/');
     } finally {
@@ -76,10 +96,64 @@ export function RecipeResults() {
     }
   }, [router]);
 
-  const sortedRecipes = useMemo(() => {
-    if (!results) return [];
+  const fetchMore = useCallback(async () => {
+    if (!searchParams || isLoadingRef.current) return;
 
-    return [...results.recipes].sort((a, b) => {
+    isLoadingRef.current = true;
+    setLoadingMore(true);
+
+    try {
+      const response = await fetch('/api/recipes/match-recipes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...searchParams,
+          limit: PAGE_SIZE,
+          offset: recipes.length,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const newRecipes = data.data?.recipes || [];
+        setHasMore(data.data?.hasMore || false);
+        setRecipes((prev) => [...prev, ...newRecipes]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch more recipes:', error);
+    } finally {
+      setLoadingMore(false);
+      isLoadingRef.current = false;
+    }
+  }, [searchParams, recipes.length]);
+
+  const handleScroll = useCallback(() => {
+    if (!hasMore || isLoadingRef.current) return;
+
+    const trigger = loadMoreRef.current;
+    if (!trigger) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const isVisible = rect.top < window.innerHeight + 100;
+
+    if (isVisible) {
+      fetchMore();
+    }
+  }, [hasMore, fetchMore]);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [handleScroll]);
+
+  const sortedRecipes = useMemo(() => {
+    if (!recipes.length) return [];
+
+    return [...recipes].sort((a, b) => {
       switch (sortBy) {
         case 'score':
           return b.score - a.score;
@@ -97,7 +171,7 @@ export function RecipeResults() {
           return 0;
       }
     });
-  }, [results, sortBy]);
+  }, [recipes, sortBy]);
 
   if (loading) {
     return (
@@ -110,7 +184,7 @@ export function RecipeResults() {
     );
   }
 
-  if (!results || results.recipes.length === 0) {
+  if (recipes.length === 0) {
     return (
       <div className="page-container">
         <PageHeader title="Žádné recepty nenalezeny" />
@@ -122,7 +196,7 @@ export function RecipeResults() {
   return (
     <div className="page-container">
       <PageHeader
-        title={`${results.totalMatches} ${results.totalMatches === 1 ? 'recept' : results.totalMatches < 5 ? 'recepty' : 'receptů'}`}
+        title={`${totalMatches} ${totalMatches === 1 ? 'recept' : totalMatches < 5 ? 'recepty' : 'receptů'}`}
       >
         <div className="sort-controls">
           <label htmlFor="sort-select">Řadit podle:</label>
@@ -174,6 +248,10 @@ export function RecipeResults() {
             </div>
           </Link>
         ))}
+        <div ref={loadMoreRef} className="load-more-trigger">
+          {loadingMore && <div className="loading-more">Načítám další...</div>}
+          {!loadingMore && hasMore && <div className="loading-more">Posuňte pro načtení dalších</div>}
+        </div>
       </div>
     </div>
   );
