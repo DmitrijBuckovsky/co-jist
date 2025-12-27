@@ -1,5 +1,6 @@
 'use client';
 import { Difficulty, getDifficultyLabel } from '../_utils/difficulty';
+import { Allergen, AllergenBadge } from './AllergenBadge';
 import { PageHeader } from './PageHeader';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -18,6 +19,7 @@ interface RecipeIngredient {
   name: string;
   isMain: boolean;
   have: boolean;
+  allergens?: Allergen[];
 }
 
 interface RecipeMatch {
@@ -238,6 +240,7 @@ export function RecipeResults() {
                     className={`results-ingredient ${ing.have ? 'have' : 'missing'} ${ing.isMain ? 'main' : ''}`}
                   >
                     {ing.name}
+                    {ing.allergens && ing.allergens.length > 0 && <AllergenBadge allergens={ing.allergens} />}
                   </span>
                 ))}
               </div>

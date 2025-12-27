@@ -25,8 +25,14 @@ export async function seedData(payload: Payload): Promise<void> {
     });
 
     if (existing.docs.length > 0) {
-      categoryMap[cat.name] = existing.docs[0].id;
-      console.log(`Category "${cat.name}" already exists`);
+      const existingId = existing.docs[0].id;
+      await payload.update({
+        collection: 'categories',
+        id: existingId,
+        data: cat,
+      });
+      categoryMap[cat.name] = existingId;
+      console.log(`Updated category: ${cat.name}`);
     } else {
       const created = await payload.create({
         collection: 'categories',
@@ -37,8 +43,55 @@ export async function seedData(payload: Payload): Promise<void> {
     }
   }
 
+  // Create allergens (EU standard 14 allergens)
+  const allergens = [
+    { number: 1, name: 'Obiloviny obsahující lepek' },
+    { number: 2, name: 'Korýši' },
+    { number: 3, name: 'Vejce' },
+    { number: 4, name: 'Ryby' },
+    { number: 5, name: 'Arašídy' },
+    { number: 6, name: 'Sója' },
+    { number: 7, name: 'Mléko' },
+    { number: 8, name: 'Skořápkové plody (ořechy)' },
+    { number: 9, name: 'Celer' },
+    { number: 10, name: 'Hořčice' },
+    { number: 11, name: 'Sezam' },
+    { number: 12, name: 'Oxid siřičitý a siřičitany' },
+    { number: 13, name: 'Lupina' },
+    { number: 14, name: 'Měkkýši' },
+  ];
+
+  const allergenMap: Record<number, number> = {};
+
+  for (const allergen of allergens) {
+    const existing = await payload.find({
+      collection: 'allergens',
+      where: { number: { equals: allergen.number } },
+    });
+
+    if (existing.docs.length > 0) {
+      const existingId = existing.docs[0].id;
+      await payload.update({
+        collection: 'allergens',
+        id: existingId,
+        data: allergen,
+      });
+      allergenMap[allergen.number] = existingId;
+      console.log(`Updated allergen: ${allergen.number} - ${allergen.name}`);
+    } else {
+      const created = await payload.create({
+        collection: 'allergens',
+        data: allergen,
+      });
+      allergenMap[allergen.number] = created.id;
+      console.log(`Created allergen: ${allergen.number} - ${allergen.name}`);
+    }
+  }
+
   // Create ingredients
-  const ingredients = [
+  // Allergen numbers: 1=Gluten, 2=Crustaceans, 3=Eggs, 4=Fish, 5=Peanuts, 6=Soy, 7=Milk,
+  // 8=Tree nuts, 9=Celery, 10=Mustard, 11=Sesame, 12=Sulphites, 13=Lupin, 14=Molluscs
+  const ingredients: { name: string; category: string; allergens?: number[] }[] = [
     // Zelenina
     { name: 'Cibule', category: 'zelenina' },
     { name: 'Česnek', category: 'zelenina' },
@@ -66,20 +119,20 @@ export async function seedData(payload: Payload): Promise<void> {
     { name: 'Uzené maso', category: 'maso' },
     { name: 'Játra', category: 'maso' },
     // Mléčné výrobky
-    { name: 'Mléko', category: 'mléčné výrobky' },
-    { name: 'Smetana', category: 'mléčné výrobky' },
-    { name: 'Máslo', category: 'mléčné výrobky' },
-    { name: 'Sýr', category: 'mléčné výrobky' },
-    { name: 'Vejce', category: 'mléčné výrobky' },
-    { name: 'Tvaroh', category: 'mléčné výrobky' },
-    { name: 'Zakysaná smetana', category: 'mléčné výrobky' },
+    { name: 'Mléko', category: 'mléčné výrobky', allergens: [7] },
+    { name: 'Smetana', category: 'mléčné výrobky', allergens: [7] },
+    { name: 'Máslo', category: 'mléčné výrobky', allergens: [7] },
+    { name: 'Sýr', category: 'mléčné výrobky', allergens: [7] },
+    { name: 'Vejce', category: 'mléčné výrobky', allergens: [3] },
+    { name: 'Tvaroh', category: 'mléčné výrobky', allergens: [7] },
+    { name: 'Zakysaná smetana', category: 'mléčné výrobky', allergens: [7] },
     // Obiloviny
-    { name: 'Mouka', category: 'obiloviny' },
+    { name: 'Mouka', category: 'obiloviny', allergens: [1] },
     { name: 'Rýže', category: 'obiloviny' },
-    { name: 'Těstoviny', category: 'obiloviny' },
-    { name: 'Chléb', category: 'obiloviny' },
-    { name: 'Strouhanka', category: 'obiloviny' },
-    { name: 'Kroupy', category: 'obiloviny' },
+    { name: 'Těstoviny', category: 'obiloviny', allergens: [1] },
+    { name: 'Chléb', category: 'obiloviny', allergens: [1] },
+    { name: 'Strouhanka', category: 'obiloviny', allergens: [1] },
+    { name: 'Kroupy', category: 'obiloviny', allergens: [1] },
     // Koření
     { name: 'Paprika mletá', category: 'koření' },
     { name: 'Kmín', category: 'koření' },
@@ -94,7 +147,7 @@ export async function seedData(payload: Payload): Promise<void> {
     { name: 'Nové koření', category: 'koření' },
     { name: 'Rajčatový protlak', category: 'ostatní' },
     { name: 'Párek', category: 'maso' },
-    { name: 'Hořčice', category: 'ostatní' },
+    { name: 'Hořčice', category: 'ostatní', allergens: [10] },
     { name: 'Kopr', category: 'zelenina' },
     { name: 'Ocet', category: 'ostatní' },
     { name: 'Droždí', category: 'ostatní' },
@@ -103,26 +156,26 @@ export async function seedData(payload: Payload): Promise<void> {
     { name: 'Prášek do pečiva', category: 'ostatní' },
     { name: 'Kakao', category: 'ostatní' },
     { name: 'Marmeláda', category: 'ostatní' },
-    { name: 'Celer', category: 'zelenina' },
+    { name: 'Celer', category: 'zelenina', allergens: [9] },
     { name: 'Petržel', category: 'zelenina' },
-    { name: 'Majonéza', category: 'ostatní' },
+    { name: 'Majonéza', category: 'ostatní', allergens: [3] },
     { name: 'Čočka', category: 'zelenina' },
-    { name: 'Rohlík', category: 'obiloviny' },
+    { name: 'Rohlík', category: 'obiloviny', allergens: [1] },
     { name: 'Rozinky', category: 'ovoce' },
     { name: 'Hrách', category: 'zelenina' },
     { name: 'Celé kuře', category: 'maso' },
     { name: 'Hlíva ústřičná', category: 'zelenina' },
     { name: 'Vývar', category: 'ostatní' },
     // Mezinárodní ingredience
-    { name: 'Mozzarella', category: 'mléčné výrobky' },
+    { name: 'Mozzarella', category: 'mléčné výrobky', allergens: [7] },
     { name: 'Bazalka', category: 'zelenina' },
     { name: 'Rýže na sushi', category: 'obiloviny' },
     { name: 'Řasa Nori', category: 'ostatní' },
-    { name: 'Losos', category: 'maso' },
+    { name: 'Losos', category: 'maso', allergens: [4] },
     { name: 'Rýžový ocet', category: 'ostatní' },
     { name: 'Wasabi', category: 'ostatní' },
-    { name: 'Sójová omáčka', category: 'ostatní' },
-    { name: 'Tortilly', category: 'obiloviny' },
+    { name: 'Sójová omáčka', category: 'ostatní', allergens: [6, 1] },
+    { name: 'Tortilly', category: 'obiloviny', allergens: [1] },
     { name: 'Fazole', category: 'zelenina' },
     { name: 'Kukuřice', category: 'zelenina' },
     { name: 'Avokádo', category: 'zelenina' },
@@ -132,56 +185,56 @@ export async function seedData(payload: Payload): Promise<void> {
     { name: 'Kokosové mléko', category: 'ostatní' },
     { name: 'Kari', category: 'koření' },
     { name: 'Zázvor', category: 'zelenina' },
-    { name: 'Špagety', category: 'obiloviny' },
-    { name: 'Parmazán', category: 'mléčné výrobky' },
-    { name: 'Bulka na hamburger', category: 'obiloviny' },
+    { name: 'Špagety', category: 'obiloviny', allergens: [1] },
+    { name: 'Parmazán', category: 'mléčné výrobky', allergens: [7] },
+    { name: 'Bulka na hamburger', category: 'obiloviny', allergens: [1, 11] },
     { name: 'Ledový salát', category: 'zelenina' },
-    { name: 'Čedar', category: 'mléčné výrobky' },
+    { name: 'Čedar', category: 'mléčné výrobky', allergens: [7] },
     { name: 'Kečup', category: 'ostatní' },
-    { name: 'Lasagne těstoviny', category: 'obiloviny' },
+    { name: 'Lasagne těstoviny', category: 'obiloviny', allergens: [1] },
     { name: 'Šafrán', category: 'koření' },
-    { name: 'Mořské plody', category: 'maso' },
+    { name: 'Mořské plody', category: 'maso', allergens: [2, 14] },
     { name: 'Citrón', category: 'ovoce' },
-    { name: 'Ramen nudle', category: 'obiloviny' },
+    { name: 'Ramen nudle', category: 'obiloviny', allergens: [1] },
     { name: 'Jarní cibulka', category: 'zelenina' },
     { name: 'Cizrna', category: 'zelenina' },
-    { name: 'Pita chléb', category: 'obiloviny' },
+    { name: 'Pita chléb', category: 'obiloviny', allergens: [1] },
     { name: 'Cuketa', category: 'zelenina' },
     { name: 'Lilek', category: 'zelenina' },
     { name: 'Tymián', category: 'koření' },
-    { name: 'Treska', category: 'maso' },
-    { name: 'Pivo', category: 'ostatní' },
-    { name: 'Tatarská omáčka', category: 'ostatní' },
+    { name: 'Treska', category: 'maso', allergens: [4] },
+    { name: 'Pivo', category: 'ostatní', allergens: [1] },
+    { name: 'Tatarská omáčka', category: 'ostatní', allergens: [3] },
     { name: 'Olivy', category: 'zelenina' },
-    { name: 'Feta sýr', category: 'mléčné výrobky' },
+    { name: 'Feta sýr', category: 'mléčné výrobky', allergens: [7] },
     { name: 'Oregano', category: 'koření' },
     { name: 'Rýžové nudle', category: 'obiloviny' },
-    { name: 'Tofu', category: 'ostatní' },
-    { name: 'Krevety', category: 'maso' },
-    { name: 'Arašídy', category: 'ostatní' },
+    { name: 'Tofu', category: 'ostatní', allergens: [6] },
+    { name: 'Krevety', category: 'maso', allergens: [2] },
+    { name: 'Arašídy', category: 'ostatní', allergens: [5] },
     { name: 'Telecí maso', category: 'maso' },
     { name: 'Červená řepa', category: 'zelenina' },
     { name: 'Římský salát', category: 'zelenina' },
-    { name: 'Ančovičky', category: 'maso' },
+    { name: 'Ančovičky', category: 'maso', allergens: [4] },
     { name: 'Rýže na rizoto', category: 'obiloviny' },
-    { name: 'Bílé víno', category: 'ostatní' },
+    { name: 'Bílé víno', category: 'ostatní', allergens: [12] },
     { name: 'Badyán', category: 'koření' },
-    { name: 'Rybí omáčka', category: 'ostatní' },
+    { name: 'Rybí omáčka', category: 'ostatní', allergens: [4] },
     { name: 'Hovězí kosti', category: 'maso' },
     { name: 'Jehněčí maso', category: 'maso' },
-    { name: 'Jogurt', category: 'mléčné výrobky' },
+    { name: 'Jogurt', category: 'mléčné výrobky', allergens: [7] },
     { name: 'Římský kmín', category: 'koření' },
     { name: 'Olivový olej', category: 'oleje a tuky' },
-    { name: 'Tahini', category: 'ostatní' },
-    { name: 'Mascarpone', category: 'mléčné výrobky' },
-    { name: 'Cukrářské piškoty', category: 'ostatní' },
+    { name: 'Tahini', category: 'ostatní', allergens: [11] },
+    { name: 'Mascarpone', category: 'mléčné výrobky', allergens: [7] },
+    { name: 'Cukrářské piškoty', category: 'ostatní', allergens: [1, 3] },
     { name: 'Káva', category: 'ostatní' },
-    { name: 'Amaretto', category: 'ostatní' },
-    { name: 'Sušenky', category: 'ostatní' },
-    { name: 'Krémový sýr', category: 'mléčné výrobky' },
+    { name: 'Amaretto', category: 'ostatní', allergens: [8] },
+    { name: 'Sušenky', category: 'ostatní', allergens: [1] },
+    { name: 'Krémový sýr', category: 'mléčné výrobky', allergens: [7] },
     { name: 'Vanilkový extrakt', category: 'ostatní' },
-    { name: 'Čokoláda na vaření', category: 'ostatní' },
-    { name: 'Vlašské ořechy', category: 'ostatní' },
+    { name: 'Čokoláda na vaření', category: 'ostatní', allergens: [7] },
+    { name: 'Vlašské ořechy', category: 'ostatní', allergens: [8] },
     { name: 'Muškátový oříšek', category: 'koření' },
   ];
 
@@ -193,17 +246,26 @@ export async function seedData(payload: Payload): Promise<void> {
       where: { name: { equals: ing.name } },
     });
 
+    const ingredientData = {
+      name: ing.name,
+      name_search: normalizeText(ing.name),
+      category: categoryMap[ing.category],
+      allergens: ing.allergens?.map((n) => allergenMap[n]),
+    };
+
     if (existing.docs.length > 0) {
-      ingredientMap[ing.name] = existing.docs[0].id;
-      console.log(`Ingredient "${ing.name}" already exists`);
+      const existingId = existing.docs[0].id;
+      await payload.update({
+        collection: 'ingredients',
+        id: existingId,
+        data: ingredientData,
+      });
+      ingredientMap[ing.name] = existingId;
+      console.log(`Updated ingredient: ${ing.name}`);
     } else {
       const created = await payload.create({
         collection: 'ingredients',
-        data: {
-          name: ing.name,
-          name_search: normalizeText(ing.name),
-          category: categoryMap[ing.category],
-        },
+        data: ingredientData,
       });
       ingredientMap[ing.name] = created.id;
       console.log(`Created ingredient: ${ing.name}`);
@@ -1455,26 +1517,49 @@ export async function seedData(payload: Payload): Promise<void> {
       where: { name: { equals: recipe.name } },
     });
 
+    const recipeData = {
+      name: recipe.name,
+      name_search: normalizeText(recipe.name),
+      instructions: recipe.instructions,
+      prep_time_mins: recipe.prep_time_mins,
+      difficulty: recipe.difficulty,
+    };
+
+    let recipeId: number;
+
     if (existing.docs.length > 0) {
-      console.log(`Recipe "${recipe.name}" already exists`);
-      continue;
+      recipeId = existing.docs[0].id;
+      await payload.update({
+        collection: 'recipes',
+        id: recipeId,
+        data: recipeData,
+        context: { skipIngredientSync: true },
+      });
+      console.log(`Updated recipe: ${recipe.name}`);
+
+      // Delete existing recipe-ingredients
+      const existingIngredients = await payload.find({
+        collection: 'recipe-ingredients',
+        where: { recipe: { equals: recipeId } },
+        limit: 100,
+      });
+      for (const ri of existingIngredients.docs) {
+        await payload.delete({
+          collection: 'recipe-ingredients',
+          id: ri.id,
+        });
+      }
+    } else {
+      const created = await payload.create({
+        collection: 'recipes',
+        data: recipeData,
+        context: { skipIngredientSync: true },
+      });
+      recipeId = created.id;
+      console.log(`Created recipe: ${recipe.name}`);
     }
 
-    // Create recipe without ingredients_data to avoid hook trigger
-    const created = await payload.create({
-      collection: 'recipes',
-      data: {
-        name: recipe.name,
-        name_search: normalizeText(recipe.name),
-        instructions: recipe.instructions,
-        prep_time_mins: recipe.prep_time_mins,
-        difficulty: recipe.difficulty,
-      },
-      context: { skipIngredientSync: true },
-    });
-    console.log(`Created recipe: ${recipe.name}`);
-
-    // Create recipe ingredients directly
+    // Create recipe ingredients
     for (const ing of recipe.ingredients) {
       const ingredientId = ingredientMap[ing.name];
       if (!ingredientId) {
@@ -1485,7 +1570,7 @@ export async function seedData(payload: Payload): Promise<void> {
       await payload.create({
         collection: 'recipe-ingredients',
         data: {
-          recipe: created.id,
+          recipe: recipeId,
           ingredient: ingredientId,
           amount: ing.amount,
           is_main: ing.is_main,

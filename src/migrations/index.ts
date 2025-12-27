@@ -3,6 +3,7 @@ import * as migration_20251222_213756_add_ingredients_data_to_recipes from './20
 import * as migration_20251222_221552_recipe_ingredients_cascade_delete from './20251222_221552_recipe_ingredients_cascade_delete';
 import * as migration_20251223_155130_add_recipe_name_search from './20251223_155130_add_recipe_name_search';
 import * as migration_20251223_183051_add_recipe_difficulty from './20251223_183051_add_recipe_difficulty';
+import * as migration_20251226_180340_add_allergens from './20251226_180340_add_allergens';
 
 export const migrations = [
   {
@@ -28,6 +29,11 @@ export const migrations = [
   {
     up: migration_20251223_183051_add_recipe_difficulty.up,
     down: migration_20251223_183051_add_recipe_difficulty.down,
-    name: '20251223_183051_add_recipe_difficulty'
+    name: '20251223_183051_add_recipe_difficulty',
+  },
+  {
+    up: migration_20251226_180340_add_allergens.up,
+    down: migration_20251226_180340_add_allergens.down,
+    name: '20251226_180340_add_allergens'
   },
 ];

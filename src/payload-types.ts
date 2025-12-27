@@ -69,6 +69,7 @@ export interface Config {
   collections: {
     users: User;
     categories: Category;
+    allergens: Allergen;
     ingredients: Ingredient;
     recipes: Recipe;
     'recipe-ingredients': RecipeIngredient;
@@ -81,6 +82,7 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    allergens: AllergensSelect<false> | AllergensSelect<true>;
     ingredients: IngredientsSelect<false> | IngredientsSelect<true>;
     recipes: RecipesSelect<false> | RecipesSelect<true>;
     'recipe-ingredients': RecipeIngredientsSelect<false> | RecipeIngredientsSelect<true>;
@@ -162,6 +164,23 @@ export interface Category {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "allergens".
+ */
+export interface Allergen {
+  id: number;
+  /**
+   * EU allergen number (1-14)
+   */
+  number: number;
+  /**
+   * Czech name of the allergen
+   */
+  name: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "ingredients".
  */
 export interface Ingredient {
@@ -169,6 +188,10 @@ export interface Ingredient {
   name: string;
   name_search: string;
   category: number | Category;
+  /**
+   * Select allergens contained in this ingredient
+   */
+  allergens?: (number | Allergen)[] | null;
   recipe_ingredients?: (number | RecipeIngredient)[] | null;
   updatedAt: string;
   createdAt: string;
@@ -249,6 +272,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'categories';
         value: number | Category;
+      } | null)
+    | ({
+        relationTo: 'allergens';
+        value: number | Allergen;
       } | null)
     | ({
         relationTo: 'ingredients';
@@ -341,12 +368,23 @@ export interface CategoriesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "allergens_select".
+ */
+export interface AllergensSelect<T extends boolean = true> {
+  number?: T;
+  name?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "ingredients_select".
  */
 export interface IngredientsSelect<T extends boolean = true> {
   name?: T;
   name_search?: T;
   category?: T;
+  allergens?: T;
   recipe_ingredients?: T;
   updatedAt?: T;
   createdAt?: T;

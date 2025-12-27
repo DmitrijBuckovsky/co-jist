@@ -1,3 +1,4 @@
+import { Allergens } from './collections/allergens';
 import { Categories, Ingredients } from './collections/ingredients';
 import { RecipeIngredients } from './collections/recipe-ingredients';
 import { Recipes } from './collections/recipes';
@@ -23,7 +24,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Categories, Ingredients, Recipes, RecipeIngredients],
+  collections: [Users, Categories, Allergens, Ingredients, Recipes, RecipeIngredients],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

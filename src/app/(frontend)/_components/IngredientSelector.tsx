@@ -1,4 +1,5 @@
 'use client';
+import { Allergen, AllergenBadge } from './AllergenBadge';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -14,6 +15,7 @@ interface Ingredient {
   id: number;
   name: string;
   category: Category | number;
+  allergens?: Allergen[];
 }
 
 interface IngredientSelectorProps {
@@ -45,7 +47,7 @@ export function IngredientSelector({ selectedDifficulties = [], maxPrepTime = nu
 
   const loadIngredients = async () => {
     try {
-      const response = await fetch('/api/ingredients?depth=1&limit=1000');
+      const response = await fetch('/api/ingredients?depth=2&limit=1000');
       if (!response.ok) throw new Error('Failed to fetch');
 
       const data = await response.json();
@@ -176,7 +178,10 @@ export function IngredientSelector({ selectedDifficulties = [], maxPrepTime = nu
       onClick={() => toggleIngredient(ing.id)}
       className={`selector-item ${selected.has(ing.id) ? 'selected' : ''}`}
     >
-      <span className="selector-name">{ing.name}</span>
+      <span className="selector-name">
+        {ing.name}
+        {ing.allergens && ing.allergens.length > 0 && <AllergenBadge allergens={ing.allergens} />}
+      </span>
     </div>
   );
 

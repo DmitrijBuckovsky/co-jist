@@ -48,9 +48,19 @@ export const Ingredients: CollectionConfig = {
       maxDepth: 1,
     },
     {
+      name: 'allergens',
+      type: 'relationship',
+      relationTo: 'allergens',
+      hasMany: true,
+      required: false,
+      admin: {
+        description: 'Select allergens contained in this ingredient',
+      },
+    },
+    {
       name: 'recipe_ingredients',
       type: 'relationship',
-      relationTo: 'recipe-ingredients' as any,
+      relationTo: 'recipe-ingredients',
       hasMany: true,
       required: false,
       maxDepth: 2, // Include recipe and amount details

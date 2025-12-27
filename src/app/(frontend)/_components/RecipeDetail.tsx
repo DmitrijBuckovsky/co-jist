@@ -1,5 +1,6 @@
 'use client';
 import { getDifficultyLabel } from '../_utils/difficulty';
+import { Allergen, AllergenBadge } from './AllergenBadge';
 import { GoogleIcon } from './GoogleIcon';
 import { PageHeader } from './PageHeader';
 import { CalendarCheck } from 'lucide-react';
@@ -14,6 +15,7 @@ interface RecipeIngredient {
     | {
         id: number;
         name: string;
+        allergens?: Allergen[];
       }
     | number;
 }
@@ -52,7 +54,7 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
     try {
       const [recipeRes, ingredientsRes] = await Promise.all([
         fetch(`/api/recipes/${recipeId}?depth=0`),
-        fetch(`/api/recipe-ingredients?where[recipe][equals]=${recipeId}&depth=1&limit=100`),
+        fetch(`/api/recipe-ingredients?where[recipe][equals]=${recipeId}&depth=2&limit=100`),
       ]);
 
       if (!recipeRes.ok) throw new Error('Not found');
@@ -134,7 +136,10 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
                   return (
                     <li key={ri.id} className={have ? 'have' : 'missing'}>
                       <span className="amount">{ri.amount}</span>
-                      <span className="name">{ing.name}</span>
+                      <span className="name">
+                        {ing.name}
+                        {ing.allergens && ing.allergens.length > 0 && <AllergenBadge allergens={ing.allergens} />}
+                      </span>
                     </li>
                   );
                 })}
@@ -153,7 +158,10 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
                   return (
                     <li key={ri.id} className={have ? 'have' : 'missing'}>
                       <span className="amount">{ri.amount}</span>
-                      <span className="name">{ing.name}</span>
+                      <span className="name">
+                        {ing.name}
+                        {ing.allergens && ing.allergens.length > 0 && <AllergenBadge allergens={ing.allergens} />}
+                      </span>
                     </li>
                   );
                 })}

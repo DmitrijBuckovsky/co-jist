@@ -1,4 +1,4 @@
-import { RecipeIngredientDB, RecipeIngredientInfo, RecipeMatch, RecipeMatchDB } from '../dtos/recipe-match.dto';
+import { AllergenInfo, RecipeIngredientDB, RecipeIngredientInfo, RecipeMatch, RecipeMatchDB } from '../dtos/recipe-match.dto';
 
 import { withErrorHandling } from '@/core/exceptions';
 import { extractJsonBody } from '@/core/utils/json-body-extractor';
@@ -129,6 +129,42 @@ export const matchRecipesHandler = withErrorHandling(async (req: PayloadRequest)
     recipeIds,
   ]);
 
+  // Get all unique ingredient IDs to fetch allergens
+  const uniqueIngredientIds = [...new Set(ingredientRows.map((r) => r.ingredient_id))];
+
+  // Fetch allergens for all ingredients
+  const allergensQuery = `
+    SELECT
+      ir.parent_id AS ingredient_id,
+      a.id AS allergen_id,
+      a.number,
+      a.name
+    FROM ingredients_rels ir
+    JOIN allergens a ON ir.allergens_id = a.id
+    WHERE ir.parent_id = ANY($1::int[])
+    ORDER BY a.number ASC;
+  `;
+
+  const { rows: allergenRows } = await req.payload.db.pool.query<{
+    ingredient_id: number;
+    allergen_id: number;
+    number: number;
+    name: string;
+  }>(allergensQuery, [uniqueIngredientIds]);
+
+  // Group allergens by ingredient_id
+  const allergensByIngredient = new Map<number, AllergenInfo[]>();
+  for (const row of allergenRows) {
+    const info: AllergenInfo = {
+      id: row.allergen_id,
+      number: row.number,
+      name: row.name,
+    };
+    const existing = allergensByIngredient.get(row.ingredient_id) || [];
+    existing.push(info);
+    allergensByIngredient.set(row.ingredient_id, existing);
+  }
+
   // Group ingredients by recipe_id
   const ingredientsByRecipe = new Map<number, RecipeIngredientInfo[]>();
   for (const row of ingredientRows) {
@@ -137,6 +173,7 @@ export const matchRecipesHandler = withErrorHandling(async (req: PayloadRequest)
       name: row.ingredient_name,
       isMain: row.is_main,
       have: row.have,
+      allergens: allergensByIngredient.get(row.ingredient_id),
     };
     const existing = ingredientsByRecipe.get(row.recipe_id) || [];
     existing.push(info);

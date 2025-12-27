@@ -1,8 +1,15 @@
+export interface AllergenInfo {
+  id: number;
+  number: number;
+  name: string;
+}
+
 export interface RecipeIngredientInfo {
   id: number;
   name: string;
   isMain: boolean;
   have: boolean;
+  allergens?: AllergenInfo[];
 }
 
 export class RecipeMatch {
