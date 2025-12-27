@@ -91,6 +91,11 @@ export function AllergenBadge({ allergens }: AllergenBadgeProps) {
     setShowTooltip(false);
   }, []);
 
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+  }, []);
+
   // Adjust position after tooltip renders (to get actual height)
   useEffect(() => {
     if (showTooltip && tooltipRef.current && badgeRef.current && position) {
@@ -138,11 +143,6 @@ export function AllergenBadge({ allergens }: AllergenBadgeProps) {
   // Sort allergens by number
   const sortedAllergens = [...allergens].sort((a, b) => a.number - b.number);
 
-  const handleClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-  }, []);
-
   return (
     <span
       ref={badgeRef}
@@ -166,11 +166,7 @@ export function AllergenBadge({ allergens }: AllergenBadgeProps) {
       {showTooltip &&
         position &&
         createPortal(
-          <div
-            ref={tooltipRef}
-            className="allergen-tooltip"
-            style={{ top: position.top, left: position.left }}
-          >
+          <div ref={tooltipRef} className="allergen-tooltip" style={{ top: position.top, left: position.left }}>
             {sortedAllergens.map((a) => (
               <div key={a.id ?? a.number} className="allergen-tooltip-item">
                 <span className="allergen-tooltip-number">{a.number}</span>
@@ -178,7 +174,7 @@ export function AllergenBadge({ allergens }: AllergenBadgeProps) {
               </div>
             ))}
           </div>,
-          document.body
+          document.body,
         )}
     </span>
   );

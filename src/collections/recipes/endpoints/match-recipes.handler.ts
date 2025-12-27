@@ -1,4 +1,10 @@
-import { AllergenInfo, RecipeIngredientDB, RecipeIngredientInfo, RecipeMatch, RecipeMatchDB } from '../dtos/recipe-match.dto';
+import {
+  AllergenInfo,
+  RecipeIngredientDB,
+  RecipeIngredientInfo,
+  RecipeMatch,
+  RecipeMatchDB,
+} from '../dtos/recipe-match.dto';
 
 import { withErrorHandling } from '@/core/exceptions';
 import { extractJsonBody } from '@/core/utils/json-body-extractor';
@@ -10,9 +16,17 @@ export const matchRecipesHandler = withErrorHandling(async (req: PayloadRequest)
     ingredientIds,
     difficulty,
     maxPrepTime,
+    excludeAllergenIds,
     limit = 20,
     offset = 0,
-  }: { ingredientIds?: number[]; difficulty?: string[]; maxPrepTime?: number; limit?: number; offset?: number } = body;
+  }: {
+    ingredientIds?: number[];
+    difficulty?: string[];
+    maxPrepTime?: number;
+    excludeAllergenIds?: number[];
+    limit?: number;
+    offset?: number;
+  } = body;
   const sanitizedIds = Array.isArray(ingredientIds)
     ? ingredientIds.map(Number).filter((id) => Number.isInteger(id))
     : [];
@@ -27,6 +41,11 @@ export const matchRecipesHandler = withErrorHandling(async (req: PayloadRequest)
 
   // Validate maxPrepTime
   const validMaxPrepTime = typeof maxPrepTime === 'number' && maxPrepTime > 0 ? maxPrepTime : null;
+
+  // Validate excludeAllergenIds
+  const sanitizedExcludeAllergenIds = Array.isArray(excludeAllergenIds)
+    ? excludeAllergenIds.map(Number).filter((id) => Number.isInteger(id))
+    : [];
 
   // Validate pagination
   const validLimit = typeof limit === 'number' && limit > 0 ? Math.min(limit, 100) : 20;
@@ -47,6 +66,21 @@ export const matchRecipesHandler = withErrorHandling(async (req: PayloadRequest)
   }
 
   const whereClause = filters.length > 0 ? `AND ${filters.join(' AND ')}` : '';
+
+  // Build allergen exclusion clause
+  let allergenExclusionClause = '';
+  if (sanitizedExcludeAllergenIds.length > 0) {
+    params.push(sanitizedExcludeAllergenIds);
+    // Exclude recipes that have ANY ingredient containing excluded allergens
+    allergenExclusionClause = `
+      AND id NOT IN (
+        SELECT DISTINCT ri2.recipe_id
+        FROM recipe_ingredients ri2
+        JOIN ingredients_rels ir ON ri2.ingredient_id = ir.parent_id
+        WHERE ir.allergens_id = ANY($${params.length}::int[])
+      )
+    `;
+  }
 
   // Use parameterized SQL to score recipes server-side without loading everything into memory
   const query = `
@@ -87,6 +121,7 @@ export const matchRecipesHandler = withErrorHandling(async (req: PayloadRequest)
       COUNT(*) OVER() AS total_count
     FROM recipe_analysis
     WHERE main_have = main_total AND main_total > 0
+    ${allergenExclusionClause}
     ORDER BY score DESC
     LIMIT $${params.length + 1} OFFSET $${params.length + 2};
   `;

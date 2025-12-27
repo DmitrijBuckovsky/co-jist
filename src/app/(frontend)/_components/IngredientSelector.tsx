@@ -1,10 +1,13 @@
 'use client';
 import { Allergen, AllergenBadge } from './AllergenBadge';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 // Remove diacritics from string for search comparison
 const removeDiacritics = (str: string) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+const STORAGE_KEY_ALLERGENS = 'userAllergens';
+const STORAGE_KEY_HIDE = 'hideMyAllergens';
 
 interface Category {
   id: number;
@@ -33,16 +36,31 @@ export function IngredientSelector({ selectedDifficulties = [], maxPrepTime = nu
   const [error, setError] = useState<string | null>(null);
   const [showSelected, setShowSelected] = useState(false);
   const [viewMode, setViewMode] = useState<'alphabetical' | 'grouped'>('alphabetical');
+  const [hideMyAllergens, setHideMyAllergens] = useState(false);
+  const [userAllergenIds, setUserAllergenIds] = useState<Set<number>>(new Set());
+  const hasFetchedRef = useRef(false);
+
+  // Load from localStorage after mount (avoids hydration mismatch)
+  useEffect(() => {
+    try {
+      const savedSelected = localStorage.getItem('selectedIngredients');
+      if (savedSelected) setSelected(new Set(JSON.parse(savedSelected)));
+    } catch {}
+    try {
+      const savedHide = localStorage.getItem(STORAGE_KEY_HIDE);
+      if (savedHide) setHideMyAllergens(JSON.parse(savedHide));
+    } catch {}
+    try {
+      const savedAllergens = localStorage.getItem(STORAGE_KEY_ALLERGENS);
+      if (savedAllergens) setUserAllergenIds(new Set(JSON.parse(savedAllergens)));
+    } catch {}
+  }, []);
 
   useEffect(() => {
+    // Prevent double fetch from StrictMode
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
     loadIngredients();
-    // Restore previously selected ingredients
-    const saved = localStorage.getItem('selectedIngredients');
-    if (saved) {
-      try {
-        setSelected(new Set(JSON.parse(saved)));
-      } catch {}
-    }
   }, []);
 
   const loadIngredients = async () => {
@@ -74,8 +92,15 @@ export function IngredientSelector({ selectedDifficulties = [], maxPrepTime = nu
       result = result.filter((i) => removeDiacritics(i.name.toLowerCase()).includes(query));
     }
 
+    if (hideMyAllergens && userAllergenIds.size > 0) {
+      result = result.filter((i) => {
+        if (!i.allergens || i.allergens.length === 0) return true;
+        return !i.allergens.some((a) => userAllergenIds.has(a.id));
+      });
+    }
+
     return result;
-  }, [ingredients, search, selected, showSelected]);
+  }, [ingredients, search, selected, showSelected, hideMyAllergens, userAllergenIds]);
 
   const grouped = useMemo(() => {
     const groups: Record<string, Ingredient[]> = {};
@@ -126,14 +151,24 @@ export function IngredientSelector({ selectedDifficulties = [], maxPrepTime = nu
     setError(null);
 
     try {
-      const requestBody: { ingredientIds: number[]; difficulty?: string[]; maxPrepTime?: number } = {
-        ingredientIds: Array.from(selected),
+      const ingredientIdsToSend = Array.from(selected);
+
+      const requestBody: {
+        ingredientIds: number[];
+        difficulty?: string[];
+        maxPrepTime?: number;
+        excludeAllergenIds?: number[];
+      } = {
+        ingredientIds: ingredientIdsToSend,
       };
       if (selectedDifficulties.length > 0) {
         requestBody.difficulty = selectedDifficulties;
       }
       if (maxPrepTime !== null) {
         requestBody.maxPrepTime = maxPrepTime;
+      }
+      if (hideMyAllergens && userAllergenIds.size > 0) {
+        requestBody.excludeAllergenIds = Array.from(userAllergenIds);
       }
 
       const response = await fetch('/api/recipes/match-recipes', {
@@ -145,14 +180,18 @@ export function IngredientSelector({ selectedDifficulties = [], maxPrepTime = nu
       if (!response.ok) throw new Error('Search failed');
 
       const result = await response.json();
-      // Store search params for pagination in results page
-      localStorage.setItem('recipeSearchParams', JSON.stringify({
-        ingredientIds: Array.from(selected),
-        difficulty: selectedDifficulties.length > 0 ? selectedDifficulties : undefined,
-        maxPrepTime: maxPrepTime ?? undefined,
-      }));
+      // Store search params for pagination in results page (use filtered IDs for search)
+      localStorage.setItem(
+        'recipeSearchParams',
+        JSON.stringify({
+          ingredientIds: ingredientIdsToSend,
+          difficulty: selectedDifficulties.length > 0 ? selectedDifficulties : undefined,
+          maxPrepTime: maxPrepTime ?? undefined,
+          excludeAllergenIds: hideMyAllergens && userAllergenIds.size > 0 ? Array.from(userAllergenIds) : undefined,
+        }),
+      );
       localStorage.setItem('recipeMatches', JSON.stringify(result.data));
-      localStorage.setItem('selectedIngredients', JSON.stringify(Array.from(selected)));
+      // Keep original selection (not filtered) so user doesn't lose their choices
       router.push('/results');
     } catch (err) {
       setError('Nepodařilo se najít recepty. Zkuste znovu.');
@@ -215,6 +254,19 @@ export function IngredientSelector({ selectedDifficulties = [], maxPrepTime = nu
             Skupiny
           </button>
         </div>
+        {userAllergenIds.size > 0 && (
+          <label className="selector-toggle">
+            <input
+              type="checkbox"
+              checked={hideMyAllergens}
+              onChange={(e) => {
+                setHideMyAllergens(e.target.checked);
+                localStorage.setItem('hideMyAllergens', JSON.stringify(e.target.checked));
+              }}
+            />
+            Skrýt moje alergeny
+          </label>
+        )}
         <label className="selector-toggle">
           <input type="checkbox" checked={showSelected} onChange={(e) => setShowSelected(e.target.checked)} />
           Vybráno ({selected.size})
@@ -224,7 +276,7 @@ export function IngredientSelector({ selectedDifficulties = [], maxPrepTime = nu
           className="selector-clear-btn"
           style={{ visibility: selected.size > 0 ? 'visible' : 'hidden' }}
         >
-          Smazat
+          Resetovat
         </button>
       </div>
 

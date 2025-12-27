@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarCheck, ChefHat, List, Search, Shuffle } from 'lucide-react';
+import { CalendarCheck, ChefHat, List, Search, Shuffle, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { view: 'search', label: 'Hledat', icon: Search },
   { view: 'all', label: 'Všechny', icon: List },
   { view: 'zerowaste', label: 'Plán', icon: CalendarCheck },
+  { view: 'profile', label: 'Profil', icon: User },
 ] as const;
 
 type View = (typeof NAV_ITEMS)[number]['view'];

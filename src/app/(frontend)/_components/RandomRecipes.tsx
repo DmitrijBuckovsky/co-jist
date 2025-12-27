@@ -1,20 +1,41 @@
 'use client';
 
 import { DIFFICULTY_LABELS } from '../_utils/difficulty';
-import { Recipe } from '@/payload-types';
 import Link from 'next/link';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+
+interface RandomRecipe {
+  id: number;
+  name: string;
+  difficulty: string | null;
+  prep_time_mins: number | null;
+}
+
+const STORAGE_KEY_ALLERGENS = 'userAllergens';
+const STORAGE_KEY_HIDE = 'hideMyAllergens';
 
 export function RandomRecipes() {
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [recipes, setRecipes] = useState<RandomRecipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hideMyAllergens, setHideMyAllergens] = useState(false);
+  const [userAllergenIds, setUserAllergenIds] = useState<Set<number>>(new Set());
+  const hasFetchedRef = useRef(false);
 
-  const fetchRandomRecipes = async () => {
+  const fetchRandomRecipes = async (hide: boolean, allergenIds: Set<number>) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/recipes/random-recipes');
+      const requestBody: { excludeAllergenIds?: number[] } = {};
+      if (hide && allergenIds.size > 0) {
+        requestBody.excludeAllergenIds = Array.from(allergenIds);
+      }
+
+      const response = await fetch('/api/recipes/random-recipes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch random recipes');
       }
@@ -28,13 +49,41 @@ export function RandomRecipes() {
     }
   };
 
+  // Load localStorage and fetch on mount
   useEffect(() => {
-    fetchRandomRecipes();
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
+
+    let hide = false;
+    let allergenIds = new Set<number>();
+
+    try {
+      const savedHide = localStorage.getItem(STORAGE_KEY_HIDE);
+      if (savedHide) {
+        hide = JSON.parse(savedHide);
+        setHideMyAllergens(hide);
+      }
+    } catch {}
+    try {
+      const savedAllergens = localStorage.getItem(STORAGE_KEY_ALLERGENS);
+      if (savedAllergens) {
+        allergenIds = new Set(JSON.parse(savedAllergens));
+        setUserAllergenIds(allergenIds);
+      }
+    } catch {}
+
+    fetchRandomRecipes(hide, allergenIds);
   }, []);
+
+  const handleAllergenToggle = (checked: boolean) => {
+    setHideMyAllergens(checked);
+    localStorage.setItem(STORAGE_KEY_HIDE, JSON.stringify(checked));
+    fetchRandomRecipes(checked, userAllergenIds);
+  };
 
   return (
     <div className="recipe-search" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ marginBottom: '12px' }}>
+      <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h2
           style={{
             margin: 0,
@@ -47,13 +96,18 @@ export function RandomRecipes() {
         >
           Náhodné recepty
         </h2>
+        {userAllergenIds.size > 0 && (
+          <label className="selector-toggle">
+            <input type="checkbox" checked={hideMyAllergens} onChange={(e) => handleAllergenToggle(e.target.checked)} />
+            Skrýt moje alergeny
+          </label>
+        )}
       </div>
 
       {error && <div className="error-message">{error}</div>}
 
       <div className="recipe-search-list" style={{ flex: 1, overflowY: 'auto' }}>
         {loading ? (
-          // Skeleton loading state
           Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
@@ -79,7 +133,11 @@ export function RandomRecipes() {
       </div>
 
       <div className="selector-footer">
-        <button onClick={fetchRandomRecipes} disabled={loading} className="selector-submit">
+        <button
+          onClick={() => fetchRandomRecipes(hideMyAllergens, userAllergenIds)}
+          disabled={loading}
+          className="selector-submit"
+        >
           {loading ? 'Načítám...' : 'Obnovit recepty'}
         </button>
       </div>

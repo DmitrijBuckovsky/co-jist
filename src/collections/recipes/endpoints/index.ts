@@ -31,7 +31,7 @@ export const listRecipes: Endpoint = {
 };
 
 export const randomRecipes: Endpoint = {
-  method: 'get',
+  method: 'post',
   handler: randomRecipesHandler,
   path: '/random-recipes',
 };

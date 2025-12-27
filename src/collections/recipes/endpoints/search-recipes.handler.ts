@@ -10,6 +10,7 @@ interface SearchRecipesBody {
   limit?: number;
   difficulty?: string[];
   maxPrepTime?: number;
+  excludeAllergenIds?: number[];
 }
 
 interface RecipeSearchResultDB {
@@ -49,6 +50,11 @@ export const searchRecipesHandler = withErrorHandling(async (req: PayloadRequest
   // Validate maxPrepTime
   const maxPrepTime = typeof body.maxPrepTime === 'number' && body.maxPrepTime > 0 ? body.maxPrepTime : null;
 
+  // Validate excludeAllergenIds
+  const sanitizedExcludeAllergenIds = Array.isArray(body.excludeAllergenIds)
+    ? body.excludeAllergenIds.map(Number).filter((id) => Number.isInteger(id))
+    : [];
+
   // Build filter clauses
   const filters: string[] = [];
   const params: any[] = [normalizedQuery, limit];
@@ -61,6 +67,20 @@ export const searchRecipesHandler = withErrorHandling(async (req: PayloadRequest
   if (maxPrepTime !== null) {
     params.push(maxPrepTime);
     filters.push(`prep_time_mins <= $${params.length}`);
+  }
+
+  // Build allergen exclusion clause
+  let allergenExclusionClause = '';
+  if (sanitizedExcludeAllergenIds.length > 0) {
+    params.push(sanitizedExcludeAllergenIds);
+    allergenExclusionClause = `
+      AND id NOT IN (
+        SELECT DISTINCT ri.recipe_id
+        FROM recipe_ingredients ri
+        JOIN ingredients_rels ir ON ri.ingredient_id = ir.parent_id
+        WHERE ir.allergens_id = ANY($${params.length}::int[])
+      )
+    `;
   }
 
   const whereClause = filters.length > 0 ? `AND ${filters.join(' AND ')}` : '';
@@ -89,6 +109,7 @@ export const searchRecipesHandler = withErrorHandling(async (req: PayloadRequest
       WHERE (similarity(name_search, $1) > ${SIMILARITY}
          OR name_search LIKE '%' || $1 || '%')
          ${whereClause}
+         ${allergenExclusionClause}
       ORDER BY similarity(name_search, $1) DESC, name ASC
       LIMIT $2
     `,
@@ -110,6 +131,7 @@ export const searchRecipesHandler = withErrorHandling(async (req: PayloadRequest
       FROM recipes
       WHERE name_search LIKE '%' || $1 || '%'
         ${whereClause}
+        ${allergenExclusionClause}
       ORDER BY name ASC
       LIMIT $2
     `,

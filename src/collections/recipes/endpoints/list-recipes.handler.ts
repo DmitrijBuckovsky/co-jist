@@ -61,9 +61,16 @@ export const listRecipesHandler = withErrorHandling(async (req: PayloadRequest) 
   const {
     difficulty,
     maxPrepTime,
+    excludeAllergenIds,
     limit = 20,
     offset = 0,
-  }: { difficulty?: string[]; maxPrepTime?: number; limit?: number; offset?: number } = body;
+  }: {
+    difficulty?: string[];
+    maxPrepTime?: number;
+    excludeAllergenIds?: number[];
+    limit?: number;
+    offset?: number;
+  } = body;
 
   // Validate difficulty values
   const validDifficulties = ['easy', 'medium', 'hard'];
@@ -71,6 +78,11 @@ export const listRecipesHandler = withErrorHandling(async (req: PayloadRequest) 
 
   // Validate maxPrepTime
   const validMaxPrepTime = typeof maxPrepTime === 'number' && maxPrepTime > 0 ? maxPrepTime : null;
+
+  // Validate excludeAllergenIds
+  const sanitizedExcludeAllergenIds = Array.isArray(excludeAllergenIds)
+    ? excludeAllergenIds.map(Number).filter((id) => Number.isInteger(id))
+    : [];
 
   // Validate pagination
   const validLimit = typeof limit === 'number' && limit > 0 ? Math.min(limit, 100) : 20;
@@ -92,12 +104,27 @@ export const listRecipesHandler = withErrorHandling(async (req: PayloadRequest) 
 
   const whereClause = filters.length > 0 ? `WHERE ${filters.join(' AND ')}` : '';
 
+  // Build allergen exclusion clause
+  let allergenExclusionClause = '';
+  if (sanitizedExcludeAllergenIds.length > 0) {
+    params.push(sanitizedExcludeAllergenIds);
+    allergenExclusionClause = `
+      ${whereClause ? 'AND' : 'WHERE'} r.id NOT IN (
+        SELECT DISTINCT ri2.recipe_id
+        FROM recipe_ingredients ri2
+        JOIN ingredients_rels ir ON ri2.ingredient_id = ir.parent_id
+        WHERE ir.allergens_id = ANY($${params.length}::int[])
+      )
+    `;
+  }
+
   // Get total count
   const countQuery = `
     SELECT COUNT(DISTINCT r.id) as total
     FROM recipes r
     JOIN recipe_ingredients ri ON r.id = ri.recipe_id
-    ${whereClause};
+    ${whereClause}
+    ${allergenExclusionClause};
   `;
   const { rows: countRows } = await req.payload.db.pool.query<{ total: string }>(countQuery, params);
   const totalCount = parseInt(countRows[0]?.total || '0', 10);
@@ -123,6 +150,7 @@ export const listRecipesHandler = withErrorHandling(async (req: PayloadRequest) 
     FROM recipes r
     JOIN recipe_ingredients ri ON r.id = ri.recipe_id
     ${whereClause}
+    ${allergenExclusionClause}
     GROUP BY r.id, r.name, r.difficulty, r.prep_time_mins
     ORDER BY r.name ASC
     LIMIT $${params.length - 1} OFFSET $${params.length};

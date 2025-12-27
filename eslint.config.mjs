@@ -1,6 +1,7 @@
 import { defineConfig, globalIgnores } from 'eslint/config'
 import typescriptEslintEslintPlugin from '@typescript-eslint/eslint-plugin'
 import simpleImportSort from 'eslint-plugin-simple-import-sort'
+import reactHooks from 'eslint-plugin-react-hooks'
 import globals from 'globals'
 import tsParser from '@typescript-eslint/parser'
 import path from 'node:path'
@@ -29,6 +30,7 @@ export default defineConfig([
     plugins: {
       '@typescript-eslint': typescriptEslintEslintPlugin,
       'simple-import-sort': simpleImportSort,
+      'react-hooks': reactHooks,
     },
 
     languageOptions: {
@@ -90,6 +92,8 @@ export default defineConfig([
           ],
         },
       ],
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
     },
   },
 ])

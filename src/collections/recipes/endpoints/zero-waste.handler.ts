@@ -35,11 +35,35 @@ interface RecipeIngredientRow {
  * Query params:
  * - recipeId: optional seed recipe ID (if provided, this recipe will be the starting point)
  * - mode: 'overlap' (default) for max shared ingredients, 'diverse' for max different ingredients
+ * - excludeAllergens: comma-separated allergen IDs to exclude
  */
 export const zeroWasteHandler = withErrorHandling(async (req: PayloadRequest) => {
   const url = new URL(req.url || '', 'http://localhost');
   const seedRecipeId = url.searchParams.get('recipeId') ? parseInt(url.searchParams.get('recipeId')!, 10) : null;
   const mode = url.searchParams.get('mode') === 'diverse' ? 'diverse' : 'overlap';
+
+  // Parse and validate excludeAllergens
+  const excludeAllergensParam = url.searchParams.get('excludeAllergens') || '';
+  const excludeAllergenIds = excludeAllergensParam
+    .split(',')
+    .map((s) => parseInt(s.trim(), 10))
+    .filter((id) => Number.isInteger(id) && id > 0);
+
+  // Build allergen exclusion clause
+  let allergenExclusionClause = '';
+  const params: any[] = [];
+  if (excludeAllergenIds.length > 0) {
+    params.push(excludeAllergenIds);
+    allergenExclusionClause = `
+      WHERE r.id NOT IN (
+        SELECT DISTINCT ri2.recipe_id
+        FROM recipe_ingredients ri2
+        JOIN ingredients_rels ir ON ri2.ingredient_id = ir.parent_id
+        WHERE ir.allergens_id = ANY($1::int[])
+      )
+    `;
+  }
+
   // Fetch all recipes with their ingredients
   const query = `
     SELECT
@@ -54,10 +78,11 @@ export const zeroWasteHandler = withErrorHandling(async (req: PayloadRequest) =>
     FROM recipes r
     JOIN recipe_ingredients ri ON r.id = ri.recipe_id
     JOIN ingredients i ON ri.ingredient_id = i.id
+    ${allergenExclusionClause}
     ORDER BY r.id, ri.is_main DESC, i.name ASC
   `;
 
-  const { rows } = await req.payload.db.pool.query<RecipeIngredientRow>(query);
+  const { rows } = await req.payload.db.pool.query<RecipeIngredientRow>(query, params);
 
   if (rows.length === 0) {
     return Response.json({

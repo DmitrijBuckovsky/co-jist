@@ -10,6 +10,7 @@ interface SearchParams {
   ingredientIds: number[];
   difficulty?: string[];
   maxPrepTime?: number;
+  excludeAllergenIds?: number[];
 }
 
 const PAGE_SIZE = 20;
@@ -89,7 +90,10 @@ export function RecipeResults() {
       const paramsData: SearchParams = JSON.parse(savedParams);
       setRecipes(resultsData.recipes);
       setTotalMatches(resultsData.totalMatches);
-      setHasMore((resultsData as RecipeResultsData & { hasMore?: boolean }).hasMore ?? resultsData.recipes.length < resultsData.totalMatches);
+      setHasMore(
+        (resultsData as RecipeResultsData & { hasMore?: boolean }).hasMore ??
+          resultsData.recipes.length < resultsData.totalMatches,
+      );
       setSearchParams(paramsData);
     } catch {
       router.push('/');
@@ -197,9 +201,7 @@ export function RecipeResults() {
 
   return (
     <div className="page-container">
-      <PageHeader
-        title={`${totalMatches} ${totalMatches === 1 ? 'recept' : totalMatches < 5 ? 'recepty' : 'receptů'}`}
-      >
+      <PageHeader title={`${totalMatches} ${totalMatches === 1 ? 'recept' : totalMatches < 5 ? 'recepty' : 'receptů'}`}>
         <div className="sort-controls">
           <label htmlFor="sort-select">Řadit podle:</label>
           <select

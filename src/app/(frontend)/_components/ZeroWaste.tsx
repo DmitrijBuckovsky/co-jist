@@ -2,7 +2,10 @@
 
 import { DIFFICULTY_LABELS } from '../_utils/difficulty';
 import Link from 'next/link';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+
+const STORAGE_KEY_ALLERGENS = 'userAllergens';
+const STORAGE_KEY_HIDE = 'hideMyAllergens';
 
 interface ZeroWasteRecipe {
   id: number;
@@ -43,14 +46,26 @@ export function ZeroWaste({ seedRecipeId }: ZeroWasteProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<PlanMode>('overlap');
+  const [hideMyAllergens, setHideMyAllergens] = useState(false);
+  const [userAllergenIds, setUserAllergenIds] = useState<Set<number>>(new Set());
+  const hasFetchedRef = useRef(false);
+  const lastFetchKeyRef = useRef<string>('');
 
-  const fetchZeroWaste = async (recipeId?: number | null, planMode: PlanMode = mode) => {
+  const fetchZeroWaste = async (
+    recipeId?: number | null,
+    planMode: PlanMode = mode,
+    hide: boolean = hideMyAllergens,
+    allergenIds: Set<number> = userAllergenIds,
+  ) => {
     setLoading(true);
     setError(null);
     try {
       const params = new URLSearchParams();
       if (recipeId) params.set('recipeId', String(recipeId));
       if (planMode === 'diverse') params.set('mode', 'diverse');
+      if (hide && allergenIds.size > 0) {
+        params.set('excludeAllergens', Array.from(allergenIds).join(','));
+      }
       const url = `/api/recipes/zero-waste${params.toString() ? `?${params}` : ''}`;
       const response = await fetch(url);
       if (!response.ok) {
@@ -70,9 +85,49 @@ export function ZeroWaste({ seedRecipeId }: ZeroWasteProps) {
     }
   };
 
+  // Load localStorage and fetch on mount
   useEffect(() => {
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
+
+    let hide = false;
+    let allergenIds = new Set<number>();
+
+    try {
+      const savedHide = localStorage.getItem(STORAGE_KEY_HIDE);
+      if (savedHide) {
+        hide = JSON.parse(savedHide);
+        setHideMyAllergens(hide);
+      }
+    } catch {}
+    try {
+      const savedAllergens = localStorage.getItem(STORAGE_KEY_ALLERGENS);
+      if (savedAllergens) {
+        allergenIds = new Set(JSON.parse(savedAllergens));
+        setUserAllergenIds(allergenIds);
+      }
+    } catch {}
+
+    lastFetchKeyRef.current = `${seedRecipeId}-${mode}`;
+    fetchZeroWaste(seedRecipeId, mode, hide, allergenIds);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Re-fetch when mode changes (after initial mount)
+  useEffect(() => {
+    if (!hasFetchedRef.current) return;
+    const fetchKey = `${seedRecipeId}-${mode}`;
+    if (lastFetchKeyRef.current === fetchKey) return;
+    lastFetchKeyRef.current = fetchKey;
     fetchZeroWaste(seedRecipeId, mode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seedRecipeId, mode]);
+
+  const handleAllergenToggle = (checked: boolean) => {
+    setHideMyAllergens(checked);
+    localStorage.setItem(STORAGE_KEY_HIDE, JSON.stringify(checked));
+    fetchZeroWaste(seedRecipeId, mode, checked, userAllergenIds);
+  };
 
   return (
     <div className="zero-waste">
@@ -126,7 +181,19 @@ export function ZeroWaste({ seedRecipeId }: ZeroWasteProps) {
         ) : data && data.recipes.length > 0 ? (
           <>
             <div className="zero-waste-recipes">
-              <h3>Recepty</h3>
+              <div className="zero-waste-title">
+                <h3>Recepty</h3>
+                {userAllergenIds.size > 0 && (
+                  <label className="selector-toggle">
+                    <input
+                      type="checkbox"
+                      checked={hideMyAllergens}
+                      onChange={(e) => handleAllergenToggle(e.target.checked)}
+                    />
+                    Skrýt moje alergeny
+                  </label>
+                )}
+              </div>
               <div className="recipe-search-list">
                 {data.recipes.map((recipe) => (
                   <Link href={`/recipe/${recipe.id}`} key={recipe.id} className="recipe-search-item">
@@ -162,7 +229,11 @@ export function ZeroWaste({ seedRecipeId }: ZeroWasteProps) {
       </div>
 
       <div className="selector-footer">
-        <button onClick={() => fetchZeroWaste(seedRecipeId)} disabled={loading} className="selector-submit">
+        <button
+          onClick={() => fetchZeroWaste(seedRecipeId, mode, hideMyAllergens, userAllergenIds)}
+          disabled={loading}
+          className="selector-submit"
+        >
           {loading ? 'Načítám...' : 'Nové recepty'}
         </button>
       </div>

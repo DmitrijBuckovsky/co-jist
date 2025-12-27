@@ -17,14 +17,40 @@ interface RecipeSearchProps {
   maxPrepTime?: number | null;
 }
 
+const STORAGE_KEY_ALLERGENS = 'userAllergens';
+const STORAGE_KEY_HIDE = 'hideMyAllergens';
+
 export function RecipeSearch({ selectedDifficulties = [], maxPrepTime = null }: RecipeSearchProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<RecipeSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
   const [whisperSuggestion, setWhisperSuggestion] = useState<string | null>(null);
+  const [hideMyAllergens, setHideMyAllergens] = useState(false);
+  const [userAllergenIds, setUserAllergenIds] = useState<Set<number>>(new Set());
   const inputRef = useRef<HTMLInputElement>(null);
   const { getSuggestion, getCompletion, applyCompletion, ready } = useWordAutocomplete();
+
+  // Use refs to read allergen values in callback without adding to dependencies
+  const hideMyAllergensRef = useRef(hideMyAllergens);
+  const userAllergenIdsRef = useRef(userAllergenIds);
+
+  // Load from localStorage after mount (avoids hydration mismatch)
+  useEffect(() => {
+    try {
+      const savedHide = localStorage.getItem(STORAGE_KEY_HIDE);
+      if (savedHide) setHideMyAllergens(JSON.parse(savedHide));
+    } catch {}
+    try {
+      const savedAllergens = localStorage.getItem(STORAGE_KEY_ALLERGENS);
+      if (savedAllergens) setUserAllergenIds(new Set(JSON.parse(savedAllergens)));
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    hideMyAllergensRef.current = hideMyAllergens;
+    userAllergenIdsRef.current = userAllergenIds;
+  }, [hideMyAllergens, userAllergenIds]);
 
   const handleSearch = useCallback(async () => {
     if (query.trim().length < 2) return;
@@ -33,7 +59,13 @@ export function RecipeSearch({ selectedDifficulties = [], maxPrepTime = null }: 
     setSearched(true);
 
     try {
-      const requestBody: { query: string; limit: number; difficulty?: string[]; maxPrepTime?: number } = {
+      const requestBody: {
+        query: string;
+        limit: number;
+        difficulty?: string[];
+        maxPrepTime?: number;
+        excludeAllergenIds?: number[];
+      } = {
         query: query.trim(),
         limit: 20,
       };
@@ -42,6 +74,9 @@ export function RecipeSearch({ selectedDifficulties = [], maxPrepTime = null }: 
       }
       if (maxPrepTime !== null) {
         requestBody.maxPrepTime = maxPrepTime;
+      }
+      if (hideMyAllergensRef.current && userAllergenIdsRef.current.size > 0) {
+        requestBody.excludeAllergenIds = Array.from(userAllergenIdsRef.current);
       }
 
       const response = await fetch('/api/recipes/search-recipes', {
@@ -149,6 +184,20 @@ export function RecipeSearch({ selectedDifficulties = [], maxPrepTime = null }: 
           {searching ? 'Hledám...' : 'Hledat'}
         </button>
       </div>
+
+      {userAllergenIds.size > 0 && (
+        <label className="selector-toggle" style={{ marginTop: '8px' }}>
+          <input
+            type="checkbox"
+            checked={hideMyAllergens}
+            onChange={(e) => {
+              setHideMyAllergens(e.target.checked);
+              localStorage.setItem('hideMyAllergens', JSON.stringify(e.target.checked));
+            }}
+          />
+          Skrýt moje alergeny
+        </label>
+      )}
 
       {searched && (
         <div className="recipe-search-results">

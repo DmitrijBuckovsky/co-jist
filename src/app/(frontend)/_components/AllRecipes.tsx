@@ -10,6 +10,9 @@ interface Recipe {
   prepTimeMins: number | null;
 }
 
+const STORAGE_KEY_ALLERGENS = 'userAllergens';
+const STORAGE_KEY_HIDE = 'hideMyAllergens';
+
 type SortOption = 'name' | 'prepTime' | 'difficulty';
 
 const SORT_OPTIONS: Record<SortOption, string> = {
@@ -37,87 +40,143 @@ export function AllRecipes({ selectedDifficulties = [], maxPrepTime = null }: Al
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('name');
+  const [hideMyAllergens, setHideMyAllergens] = useState(false);
+  const [userAllergenIds, setUserAllergenIds] = useState<Set<number>>(new Set());
+
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
+  const hasFetchedRef = useRef(false);
+  const recipesRef = useRef(recipes);
+  const hasMoreRef = useRef(hasMore);
+  const hideMyAllergensRef = useRef(hideMyAllergens);
+  const userAllergenIdsRef = useRef(userAllergenIds);
 
-  const fetchRecipes = useCallback(
-    async (offset: number = 0, append: boolean = false) => {
-      // Use ref to prevent duplicate calls
-      if (append && isLoadingRef.current) return;
-
-      if (append) {
-        isLoadingRef.current = true;
-        setLoadingMore(true);
-      } else {
-        setLoading(true);
-      }
-
-      try {
-        const requestBody: { difficulty?: string[]; maxPrepTime?: number; limit: number; offset: number } = {
-          limit: PAGE_SIZE,
-          offset,
-        };
-        if (selectedDifficulties.length > 0) {
-          requestBody.difficulty = selectedDifficulties;
-        }
-        if (maxPrepTime !== null) {
-          requestBody.maxPrepTime = maxPrepTime;
-        }
-
-        const response = await fetch('/api/recipes/list-recipes', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const newRecipes = data.data?.recipes || [];
-          setHasMore(data.data?.hasMore || false);
-
-          if (append) {
-            setRecipes((prev) => [...prev, ...newRecipes]);
-          } else {
-            setRecipes(newRecipes);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch recipes:', error);
-      } finally {
-        setLoading(false);
-        setLoadingMore(false);
-        isLoadingRef.current = false;
-      }
-    },
-    [selectedDifficulties, maxPrepTime],
-  );
-
+  // Keep refs in sync for scroll handler
   useEffect(() => {
-    fetchRecipes(0, false);
-  }, [fetchRecipes]);
+    recipesRef.current = recipes;
+    hasMoreRef.current = hasMore;
+    hideMyAllergensRef.current = hideMyAllergens;
+    userAllergenIdsRef.current = userAllergenIds;
+  }, [recipes, hasMore, hideMyAllergens, userAllergenIds]);
 
-  // Infinite scroll - use scroll event
+  const fetchRecipes = async (offset: number = 0, append: boolean = false, hide: boolean, allergenIds: Set<number>) => {
+    if (append && isLoadingRef.current) return;
+
+    if (append) {
+      isLoadingRef.current = true;
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
+
+    try {
+      const requestBody: {
+        difficulty?: string[];
+        maxPrepTime?: number;
+        excludeAllergenIds?: number[];
+        limit: number;
+        offset: number;
+      } = {
+        limit: PAGE_SIZE,
+        offset,
+      };
+      if (selectedDifficulties.length > 0) {
+        requestBody.difficulty = selectedDifficulties;
+      }
+      if (maxPrepTime !== null) {
+        requestBody.maxPrepTime = maxPrepTime;
+      }
+      if (hide && allergenIds.size > 0) {
+        requestBody.excludeAllergenIds = Array.from(allergenIds);
+      }
+
+      const response = await fetch('/api/recipes/list-recipes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const newRecipes = data.data?.recipes || [];
+        setHasMore(data.data?.hasMore || false);
+
+        if (append) {
+          setRecipes((prev) => [...prev, ...newRecipes]);
+        } else {
+          setRecipes(newRecipes);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch recipes:', error);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+      isLoadingRef.current = false;
+    }
+  };
+
+  // Load localStorage and fetch on mount
+  useEffect(() => {
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
+
+    let hide = false;
+    let allergenIds = new Set<number>();
+
+    try {
+      const savedHide = localStorage.getItem(STORAGE_KEY_HIDE);
+      if (savedHide) {
+        hide = JSON.parse(savedHide);
+        setHideMyAllergens(hide);
+      }
+    } catch {}
+    try {
+      const savedAllergens = localStorage.getItem(STORAGE_KEY_ALLERGENS);
+      if (savedAllergens) {
+        allergenIds = new Set(JSON.parse(savedAllergens));
+        setUserAllergenIds(allergenIds);
+      }
+    } catch {}
+
+    fetchRecipes(0, false, hide, allergenIds);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleAllergenToggle = (checked: boolean) => {
+    setHideMyAllergens(checked);
+    localStorage.setItem(STORAGE_KEY_HIDE, JSON.stringify(checked));
+    fetchRecipes(0, false, checked, userAllergenIds);
+  };
+
+  // Infinite scroll
   const handleScroll = useCallback(() => {
-    if (!hasMore || isLoadingRef.current) return;
+    if (!hasMoreRef.current || isLoadingRef.current) return;
 
+    const container = containerRef.current;
     const trigger = loadMoreRef.current;
-    if (!trigger) return;
+    if (!container || !trigger) return;
 
-    const rect = trigger.getBoundingClientRect();
-    const isVisible = rect.top < window.innerHeight + 100;
+    const containerRect = container.getBoundingClientRect();
+    const triggerRect = trigger.getBoundingClientRect();
+    const isVisible = triggerRect.top < containerRect.bottom + 100;
 
     if (isVisible) {
-      fetchRecipes(recipes.length, true);
+      fetchRecipes(recipesRef.current.length, true, hideMyAllergensRef.current, userAllergenIdsRef.current);
     }
-  }, [hasMore, recipes.length, fetchRecipes]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
-    window.addEventListener('scroll', handleScroll);
-    // Also check immediately in case content is short
+    const container = containerRef.current;
+    if (!container) return;
+
+    container.addEventListener('scroll', handleScroll);
     handleScroll();
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      container.removeEventListener('scroll', handleScroll);
     };
   }, [handleScroll]);
 
@@ -151,7 +210,7 @@ export function AllRecipes({ selectedDifficulties = [], maxPrepTime = null }: Al
   }
 
   return (
-    <div className="recipe-search">
+    <div className="recipe-search" ref={containerRef}>
       <div className="results-controls">
         <div className="sort-controls">
           <label htmlFor="sort-select-all">Řadit podle:</label>
@@ -168,6 +227,12 @@ export function AllRecipes({ selectedDifficulties = [], maxPrepTime = null }: Al
             ))}
           </select>
         </div>
+        {userAllergenIds.size > 0 && (
+          <label className="selector-toggle">
+            <input type="checkbox" checked={hideMyAllergens} onChange={(e) => handleAllergenToggle(e.target.checked)} />
+            Skrýt moje alergeny
+          </label>
+        )}
       </div>
       <div className="recipe-search-list">
         {sortedRecipes.map((recipe) => (

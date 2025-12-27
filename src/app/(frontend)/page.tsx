@@ -1,6 +1,7 @@
 'use client';
 import { AllRecipes } from './_components/AllRecipes';
 import { IngredientSelector } from './_components/IngredientSelector';
+import { ProfileView } from './_components/ProfileView';
 import { RandomRecipes } from './_components/RandomRecipes';
 import { RecipeSearch } from './_components/RecipeSearch';
 import { ZeroWaste } from './_components/ZeroWaste';
@@ -8,9 +9,9 @@ import { Difficulty, DIFFICULTY_LABELS } from './_utils/difficulty';
 import { useSearchParams } from 'next/navigation';
 import React, { Suspense, useEffect, useState } from 'react';
 
-type View = 'all' | 'search' | 'match' | 'random' | 'zerowaste';
+type View = 'all' | 'search' | 'match' | 'random' | 'zerowaste' | 'profile';
 
-const VALID_VIEWS: View[] = ['all', 'search', 'match', 'random', 'zerowaste'];
+const VALID_VIEWS: View[] = ['all', 'search', 'match', 'random', 'zerowaste', 'profile'];
 
 function HomePageContent() {
   const searchParams = useSearchParams();
@@ -64,7 +65,7 @@ function HomePageContent() {
 
   return (
     <div className="main-page">
-      {view !== 'random' && view !== 'zerowaste' && (
+      {view !== 'random' && view !== 'zerowaste' && view !== 'profile' && (
         <div className="difficulty-filter">
           <div className="filter-section">
             <span className="difficulty-label">Obtížnost:</span>
@@ -109,6 +110,7 @@ function HomePageContent() {
         )}
         {view === 'random' && <RandomRecipes />}
         {view === 'zerowaste' && <ZeroWaste seedRecipeId={seedRecipeId} />}
+        {view === 'profile' && <ProfileView />}
       </div>
     </div>
   );

@@ -41,6 +41,28 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
   const [selectedIngredients, setSelectedIngredients] = useState<Set<number>>(new Set());
 
   useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [recipeRes, ingredientsRes] = await Promise.all([
+          fetch(`/api/recipes/${recipeId}?depth=0`),
+          fetch(`/api/recipe-ingredients?where[recipe][equals]=${recipeId}&depth=2&limit=100`),
+        ]);
+
+        if (!recipeRes.ok) throw new Error('Not found');
+
+        const recipeData = await recipeRes.json();
+        const ingredientsData = await ingredientsRes.json();
+
+        setRecipe(recipeData);
+        setIngredients(ingredientsData.docs || []);
+      } catch (err) {
+        setError('Recipe not found');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadData();
     const saved = localStorage.getItem('selectedIngredients');
     if (saved) {
@@ -49,28 +71,6 @@ export function RecipeDetail({ recipeId }: RecipeDetailProps) {
       } catch {}
     }
   }, [recipeId]);
-
-  const loadData = async () => {
-    try {
-      const [recipeRes, ingredientsRes] = await Promise.all([
-        fetch(`/api/recipes/${recipeId}?depth=0`),
-        fetch(`/api/recipe-ingredients?where[recipe][equals]=${recipeId}&depth=2&limit=100`),
-      ]);
-
-      if (!recipeRes.ok) throw new Error('Not found');
-
-      const recipeData = await recipeRes.json();
-      const ingredientsData = await ingredientsRes.json();
-
-      setRecipe(recipeData);
-      setIngredients(ingredientsData.docs || []);
-    } catch (err) {
-      setError('Recipe not found');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) {
     return (
