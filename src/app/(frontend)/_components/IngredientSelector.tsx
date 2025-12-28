@@ -1,5 +1,6 @@
 'use client';
 import { Allergen, AllergenBadge } from './AllergenBadge';
+import { InfoModal } from './InfoModal';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -227,7 +228,14 @@ export function IngredientSelector({ selectedDifficulties = [], maxPrepTime = nu
   return (
     <div className="selector-page">
       <header className="selector-header">
-        <h1>Co máš v kuchyni?</h1>
+        <div className="page-title-row">
+          <h1>Co máš v kuchyni?</h1>
+          <InfoModal>
+            <p>Vyberte ingredience, které máte doma.</p>
+            <p>Aplikace najde recepty, které z nich můžete uvařit.</p>
+            <p>Čím více ingrediencí vyberete, tím přesnější budou výsledky.</p>
+          </InfoModal>
+        </div>
       </header>
 
       {error && <div className="selector-error">{error}</div>}

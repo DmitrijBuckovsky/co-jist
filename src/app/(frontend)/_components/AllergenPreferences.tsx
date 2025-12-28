@@ -1,6 +1,7 @@
 'use client';
 import { ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { InfoModal } from './InfoModal';
 
 interface Allergen {
   id: number;
@@ -69,6 +70,13 @@ export function AllergenPreferences({ onBack }: AllergenPreferencesProps) {
           <ArrowLeft size={20} />
         </button>
         <h1>Moje alergeny</h1>
+        <InfoModal>
+          <p>Nastavte si své alergenové preference.</p>
+          <p>
+            Vybrané alergeny budou automaticky skryty ve všech sekcích aplikace, pokud zapnete přepínač "Skrýt moje
+            alergeny".
+          </p>
+        </InfoModal>
       </header>
 
       <p className="allergen-prefs-description">

@@ -1,6 +1,7 @@
 'use client';
 
 import { DIFFICULTY_LABELS } from '../_utils/difficulty';
+import { InfoModal } from './InfoModal';
 import Link from 'next/link';
 import React, { useEffect, useRef, useState } from 'react';
 
@@ -133,7 +134,14 @@ export function ZeroWaste({ seedRecipeId }: ZeroWasteProps) {
     <div className="zero-waste">
       <div className="zero-waste-header">
         <div className="zero-waste-controls">
-          <h2>Plán</h2>
+          <div className="page-title-row">
+            <h2>Plán</h2>
+            <InfoModal>
+              <p>Plánování jídel s minimálním odpadem.</p>
+              <p>Režim "Sdílené" najde recepty se společnými ingrediencemi, "Různé" nabídne pestřejší výběr.</p>
+              <p>Seznam nákupu ukazuje všechny potřebné ingredience.</p>
+            </InfoModal>
+          </div>
           <div className="zero-waste-toggle-group">
             <label className="zero-waste-toggle-label">Ingredience:</label>
             <div className="selector-view-toggle">

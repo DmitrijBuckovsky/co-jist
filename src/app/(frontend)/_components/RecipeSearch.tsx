@@ -1,6 +1,7 @@
 'use client';
 import { useWordAutocomplete } from '../_hooks/useWordAutocomplete';
 import { getDifficultyLabel } from '../_utils/difficulty';
+import { InfoModal } from './InfoModal';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -146,7 +147,14 @@ export function RecipeSearch({ selectedDifficulties = [], maxPrepTime = null }: 
 
   return (
     <div className="recipe-search">
-      <h2>Hledat recepty</h2>
+      <div className="page-title-row">
+        <h2>Hledat recepty</h2>
+        <InfoModal>
+          <p>Hledejte recepty podle názvu.</p>
+          <p>Začněte psát a uvidíte návrhy.</p>
+          <p>Můžete filtrovat podle obtížnosti a maximálního času přípravy.</p>
+        </InfoModal>
+      </div>
 
       <div className="recipe-search-input">
         <div className="input-wrapper whisper-container">

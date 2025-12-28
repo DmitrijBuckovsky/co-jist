@@ -1,5 +1,6 @@
 'use client';
 import { AllergenPreferences } from './AllergenPreferences';
+import { InfoModal } from './InfoModal';
 import { User } from 'lucide-react';
 import { useState } from 'react';
 
@@ -16,7 +17,9 @@ export function ProfileView() {
         <div className="profile-avatar">
           <User size={48} strokeWidth={1.5} />
         </div>
-        <h1 className="profile-name">Anonym</h1>
+        <div className="page-title-row" style={{ justifyContent: 'center' }}>
+          <h1 className="profile-name">Anonym</h1>
+        </div>
         <p className="profile-subtitle">Nepřihlášený uživatel</p>
       </div>
 

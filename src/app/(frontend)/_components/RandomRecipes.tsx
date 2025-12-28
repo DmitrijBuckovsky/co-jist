@@ -1,6 +1,7 @@
 'use client';
 
 import { DIFFICULTY_LABELS } from '../_utils/difficulty';
+import { InfoModal } from './InfoModal';
 import Link from 'next/link';
 import React, { useEffect, useRef, useState } from 'react';
 
@@ -84,18 +85,25 @@ export function RandomRecipes() {
   return (
     <div className="recipe-search" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <h2
-          style={{
-            margin: 0,
-            fontSize: '14px',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-            color: 'rgb(120, 120, 120)',
-            fontWeight: 600,
-          }}
-        >
-          Náhodné recepty
-        </h2>
+        <div className="page-title-row">
+          <h2
+            style={{
+              margin: 0,
+              fontSize: '14px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              color: 'rgb(120, 120, 120)',
+              fontWeight: 600,
+            }}
+          >
+            Náhodné recepty
+          </h2>
+          <InfoModal>
+            <p>Náhodné recepty vám nabízejí inspiraci pro vaření.</p>
+            <p>Kliknutím na "Nové recepty" získáte další náhodný výběr.</p>
+            <p>Pokud máte nastavené alergeny, můžete je skrýt pomocí přepínače.</p>
+          </InfoModal>
+        </div>
         {userAllergenIds.size > 0 && (
           <label className="selector-toggle">
             <input type="checkbox" checked={hideMyAllergens} onChange={(e) => handleAllergenToggle(e.target.checked)} />

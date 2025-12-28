@@ -1,5 +1,6 @@
 'use client';
 import { Difficulty, getDifficultyLabel } from '../_utils/difficulty';
+import { InfoModal } from './InfoModal';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -61,10 +62,10 @@ export function AllRecipes({ selectedDifficulties = [], maxPrepTime = null }: Al
   }, [recipes, hasMore, hideMyAllergens, userAllergenIds]);
 
   const fetchRecipes = async (offset: number = 0, append: boolean = false, hide: boolean, allergenIds: Set<number>) => {
-    if (append && isLoadingRef.current) return;
+    if (isLoadingRef.current) return;
+    isLoadingRef.current = true;
 
     if (append) {
-      isLoadingRef.current = true;
       setLoadingMore(true);
     } else {
       setLoading(true);
@@ -103,7 +104,11 @@ export function AllRecipes({ selectedDifficulties = [], maxPrepTime = null }: Al
         setHasMore(data.data?.hasMore || false);
 
         if (append) {
-          setRecipes((prev) => [...prev, ...newRecipes]);
+          setRecipes((prev) => {
+            const existingIds = new Set(prev.map((r) => r.id));
+            const uniqueNew = newRecipes.filter((r: Recipe) => !existingIds.has(r.id));
+            return [...prev, ...uniqueNew];
+          });
         } else {
           setRecipes(newRecipes);
         }
@@ -150,35 +155,25 @@ export function AllRecipes({ selectedDifficulties = [], maxPrepTime = null }: Al
     fetchRecipes(0, false, checked, userAllergenIds);
   };
 
-  // Infinite scroll
-  const handleScroll = useCallback(() => {
-    if (!hasMoreRef.current || isLoadingRef.current) return;
-
-    const container = containerRef.current;
-    const trigger = loadMoreRef.current;
-    if (!container || !trigger) return;
-
-    const containerRect = container.getBoundingClientRect();
-    const triggerRect = trigger.getBoundingClientRect();
-    const isVisible = triggerRect.top < containerRect.bottom + 100;
-
-    if (isVisible) {
-      fetchRecipes(recipesRef.current.length, true, hideMyAllergensRef.current, userAllergenIdsRef.current);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
+  // Infinite scroll using IntersectionObserver
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    const trigger = loadMoreRef.current;
+    if (!trigger) return;
 
-    container.addEventListener('scroll', handleScroll);
-    handleScroll();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMoreRef.current && !isLoadingRef.current) {
+          fetchRecipes(recipesRef.current.length, true, hideMyAllergensRef.current, userAllergenIdsRef.current);
+        }
+      },
+      { rootMargin: '200px' },
+    );
 
-    return () => {
-      container.removeEventListener('scroll', handleScroll);
-    };
-  }, [handleScroll]);
+    observer.observe(trigger);
+
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, loadingMore]); // Re-observe after loading state changes
 
   const sortedRecipes = useMemo(() => {
     if (!recipes) return [];
@@ -211,6 +206,27 @@ export function AllRecipes({ selectedDifficulties = [], maxPrepTime = null }: Al
 
   return (
     <div className="recipe-search" ref={containerRef}>
+      <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="page-title-row">
+          <h2
+            style={{
+              margin: 0,
+              fontSize: '14px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              color: 'rgb(120, 120, 120)',
+              fontWeight: 600,
+            }}
+          >
+            Všechny recepty
+          </h2>
+          <InfoModal>
+            <p>Procházejte všechny recepty v databázi.</p>
+            <p>Můžete je řadit podle názvu, času přípravy nebo obtížnosti.</p>
+            <p>Posouvejte dolů pro načtení dalších receptů.</p>
+          </InfoModal>
+        </div>
+      </div>
       <div className="results-controls">
         <div className="sort-controls">
           <label htmlFor="sort-select-all">Řadit podle:</label>
