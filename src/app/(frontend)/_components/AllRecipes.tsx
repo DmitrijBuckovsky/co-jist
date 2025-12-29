@@ -2,7 +2,7 @@
 import { Difficulty, getDifficultyLabel } from '../_utils/difficulty';
 import { InfoModal } from './InfoModal';
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 interface Recipe {
   id: number;

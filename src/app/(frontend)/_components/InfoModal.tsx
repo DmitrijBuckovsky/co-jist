@@ -29,12 +29,7 @@ export function InfoModal({ children }: InfoModalProps) {
 
   return (
     <>
-      <button
-        className="info-icon"
-        onClick={() => setIsOpen(true)}
-        aria-label="Nápověda"
-        type="button"
-      >
+      <button className="info-icon" onClick={() => setIsOpen(true)} aria-label="Nápověda" type="button">
         <Info size={18} />
       </button>
 

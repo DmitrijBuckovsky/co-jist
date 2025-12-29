@@ -1,6 +1,5 @@
 'use client';
 import { AllergenPreferences } from './AllergenPreferences';
-import { InfoModal } from './InfoModal';
 import { User } from 'lucide-react';
 import { useState } from 'react';
 

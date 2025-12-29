@@ -1,7 +1,7 @@
 'use client';
+import { InfoModal } from './InfoModal';
 import { ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { InfoModal } from './InfoModal';
 
 interface Allergen {
   id: number;
